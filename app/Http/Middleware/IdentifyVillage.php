@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyVillage
@@ -15,16 +16,26 @@ class IdentifyVillage
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $host = $request->getHost();
-        $subdomain = explode('.', $host)[0];
-
-        $village = \App\Models\Village::where('slug', $subdomain)->first();
-
-        if (!$village) {
-            abort(404);
+        if (!Schema::hasTable('villages')) {
+            return $next($request);
         }
 
-        app()->instance('currentVillage', $village);
+        $host = $request->getHost();
+        $subdomain = explode('.', $host)[0] ?? null;
+
+        $village = null;
+
+        if ($subdomain && !in_array($host, ['localhost', '127.0.0.1'], true)) {
+            $village = \App\Models\Village::where('slug', $subdomain)->first();
+        }
+
+        if (!$village) {
+            $village = \App\Models\Village::query()->first();
+        }
+
+        if ($village) {
+            app()->instance('currentVillage', $village);
+        }
 
         return $next($request);
     }

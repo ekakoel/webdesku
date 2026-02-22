@@ -15,6 +15,11 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if (auth()->user()?->isAparat())
+                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin Desa') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -34,6 +39,57 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        @if (auth()->user()?->isAparat())
+                            <x-dropdown-link :href="route('admin.dashboard')">
+                                {{ __('Admin Dashboard') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.news.index')">
+                                {{ __('Kelola Berita') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.agendas.index')">
+                                {{ __('Kelola Agenda') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.announcements.index')">
+                                {{ __('Kelola Pengumuman') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.services.index')">
+                                {{ __('Kelola Layanan') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.service-requests.index')">
+                                {{ __('Pengajuan Layanan') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.galleries.index')">
+                                {{ __('Kelola Galeri') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-assets.index')">
+                                {{ __('Kelola Infografis Desa') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-populations.index')">
+                                {{ __('Kelola Penduduk (Infografis)') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-apbdes-items.index')">
+                                {{ __('Kelola APBDes (Infografis)') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-infographic-items.index')">
+                                {{ __('Kelola Infografis Lainnya') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.head-messages.index')">
+                                {{ __('Kelola Sambutan Kades') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.officials.index')">
+                                {{ __('Kelola Aparatur Desa') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.sliders.index')">
+                                {{ __('Kelola Slider Beranda') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-map.edit')">
+                                {{ __('Kelola Map Desa') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.profile-pages.index')">
+                                {{ __('Kelola Halaman Profil Desa') }}
+                            </x-dropdown-link>
+                        @endif
+
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
@@ -70,6 +126,11 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            @if (auth()->user()?->isAparat())
+                <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                    {{ __('Admin Desa') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
@@ -80,6 +141,54 @@
             </div>
 
             <div class="mt-3 space-y-1">
+                @if (auth()->user()?->isAparat())
+                    <x-responsive-nav-link :href="route('admin.news.index')">
+                        {{ __('Kelola Berita') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.agendas.index')">
+                        {{ __('Kelola Agenda') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.announcements.index')">
+                        {{ __('Kelola Pengumuman') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.services.index')">
+                        {{ __('Kelola Layanan') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.service-requests.index')">
+                        {{ __('Pengajuan Layanan') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.galleries.index')">
+                        {{ __('Kelola Galeri') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-assets.index')">
+                        {{ __('Kelola Infografis Desa') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-populations.index')">
+                        {{ __('Kelola Penduduk (Infografis)') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-apbdes-items.index')">
+                        {{ __('Kelola APBDes (Infografis)') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-infographic-items.index')">
+                        {{ __('Kelola Infografis Lainnya') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.head-messages.index')">
+                        {{ __('Kelola Sambutan Kades') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.officials.index')">
+                        {{ __('Kelola Aparatur Desa') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.sliders.index')">
+                        {{ __('Kelola Slider Beranda') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-map.edit')">
+                        {{ __('Kelola Map Desa') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.profile-pages.index')">
+                        {{ __('Kelola Halaman Profil Desa') }}
+                    </x-responsive-nav-link>
+                @endif
+
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
@@ -98,3 +207,5 @@
         </div>
     </div>
 </nav>
+
+

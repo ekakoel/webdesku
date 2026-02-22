@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Hotfix: prevent stale modal backdrops from blocking admin interactions. */
+.admin-area div.fixed.inset-0.transform.transition-all {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.admin-area div.fixed.inset-0.overflow-y-auto {
+    display: none !important;
+    pointer-events: none !important;
+}
