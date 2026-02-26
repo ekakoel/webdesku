@@ -2,22 +2,30 @@
 <div class="space-y-5">
     <div class="grid gap-4 md:grid-cols-2">
         <div>
+            <label for="category" class="block text-sm font-medium text-gray-700">Kategori</label>
+            <select id="category" name="category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                @foreach ($categoryOptions as $key => $label)
+                    <option value="{{ $key }}" @selected(old('category', $item->category ?? 'umum') === $key)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label for="title" class="block text-sm font-medium text-gray-700">Judul</label>
             <input id="title" name="title" type="text" value="{{ old('title', $item->title ?? '') }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
+    </div>
+    <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label for="value" class="block text-sm font-medium text-gray-700">Nilai</label>
             <input id="value" name="value" type="text" value="{{ old('value', $item->value ?? '') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
-    </div>
-    <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label for="unit" class="block text-sm font-medium text-gray-700">Unit</label>
             <input id="unit" name="unit" type="text" value="{{ old('unit', $item->unit ?? '') }}" placeholder="contoh: unit, %, orang, km" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
         <div>
-            <label for="icon" class="block text-sm font-medium text-gray-700">Icon (teks singkat)</label>
-            <input id="icon" name="icon" type="text" value="{{ old('icon', $item->icon ?? '') }}" placeholder="contoh: UMKM, BUMDES" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <label for="icon" class="block text-sm font-medium text-gray-700">Icon Font Awesome (opsional)</label>
+            <input id="icon" name="icon" type="text" value="{{ old('icon', $item->icon ?? '') }}" placeholder="contoh: fa-solid fa-chart-pie" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
     </div>
     <div class="grid gap-4 md:grid-cols-2">
@@ -44,4 +52,3 @@
         <a href="{{ route('admin.village-infographic-items.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
     </div>
 </div>
-

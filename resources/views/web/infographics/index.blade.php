@@ -28,26 +28,28 @@
                     <p>Klik marker untuk melihat detail lokasi dan buka rute Google Maps.</p>
                 </div>
             </div>
-            <div class="infographic-map-stage">
-                <div id="asset-map" class="infographic-map infographic-map--full"></div>
+            <div class="container-grid">
+                <div class="infographic-map-stage">
+                    <div id="asset-map" class="infographic-map infographic-map--full"></div>
 
-                <aside class="map-side-panel" id="asset-map-info-panel">
-                    <h3>Ringkasan Aset</h3>
-                    <p>Jumlah titik sesuai layer aktif.</p>
-                    <div class="map-side-panel__total">
-                        <strong id="asset-map-total">0</strong>
-                        <span>Total Titik</span>
-                    </div>
-                    <div class="map-side-panel__list" id="asset-map-type-list"></div>
-                </aside>
+                    <aside class="map-side-panel" id="asset-map-info-panel">
+                        <h3>Ringkasan Aset</h3>
+                        <p>Jumlah titik sesuai layer aktif.</p>
+                        <div class="map-side-panel__total">
+                            <strong id="asset-map-total">0</strong>
+                            <span>Total Titik</span>
+                        </div>
+                        <div class="map-side-panel__list" id="asset-map-type-list"></div>
+                    </aside>
 
-                <div class="map-search-box">
-                    <label for="asset-map-search">Cari lokasi/aset</label>
-                    <div class="map-search-box__row">
-                        <input id="asset-map-search" type="text" placeholder="Contoh: Balai Banjar, Pasar..." autocomplete="off">
-                        <button type="button" id="asset-map-search-clear" aria-label="Bersihkan pencarian">Reset</button>
+                    <div class="map-search-box">
+                        <label for="asset-map-search">Cari lokasi/aset</label>
+                        <div class="map-search-box__row">
+                            <input id="asset-map-search" type="text" placeholder="Contoh: Balai Banjar, Pasar..." autocomplete="off">
+                            <button type="button" id="asset-map-search-clear" aria-label="Bersihkan pencarian">Reset</button>
+                        </div>
+                        <div id="asset-map-search-results" class="map-search-results" hidden></div>
                     </div>
-                    <div id="asset-map-search-results" class="map-search-results" hidden></div>
                 </div>
             </div>
             <div class="container-grid">
@@ -109,34 +111,194 @@
 @elseif ($tab === 'penduduk')
     <section class="section-wrap section-wrap--last">
         <div class="container-grid">
-            <article class="section-card infographic-population-card">
-                <div class="section-head">
-                    <h2>Infografis Penduduk</h2>
-                </div>
-                @if ($populations->isEmpty())
+            @if ($populations->isEmpty())
+                <article class="section-card infographic-population-card">
+                    <div class="section-head">
+                        <h2>Infografis Penduduk</h2>
+                    </div>
                     <p style="margin: 0; color: #6b7280;">Data penduduk belum tersedia.</p>
-                @else
-                    <div class="split split--stats">
-                        <div class="demographics-card">
-                            <div class="demographics-card__head">
-                                <h3>Tren Penduduk</h3>
-                                <small>Laki-laki dan Perempuan per Tahun</small>
-                            </div>
-                            <div class="demographics-card__chart-wrap">
-                                <canvas id="populationTrendChart"></canvas>
-                            </div>
+                </article>
+            @else
+                @php
+                    $latestPopulation = $populations->first();
+                    $previousPopulation = $populations->skip(1)->first();
+                    $latestTotal = $latestPopulation?->total() ?? 0;
+                    $previousTotal = $previousPopulation?->total() ?? 0;
+                    $growth = $latestTotal - $previousTotal;
+                    $growthPercent = $previousTotal > 0 ? ($growth / $previousTotal) * 100 : null;
+                    $malePercent = $latestTotal > 0 ? (($latestPopulation?->male ?? 0) / $latestTotal) * 100 : 0;
+                    $femalePercent = $latestTotal > 0 ? (($latestPopulation?->female ?? 0) / $latestTotal) * 100 : 0;
+                @endphp
+
+                <article class="population-banner section-card">
+                    <div>
+                        <small>Demografi Penduduk</small>
+                        <h2>Data Kependudukan Desa {{ $village?->name ?? '' }}</h2>
+                        <p>Statistik penduduk per tahun dengan komposisi laki-laki, perempuan, kepala keluarga, dan tren pertumbuhan.</p>
+                    </div>
+                    <div class="population-banner__meta">
+                        <strong>{{ $latestPopulation?->year ?? '-' }}</strong>
+                        <span>Tahun Data Terbaru</span>
+                    </div>
+                </article>
+
+                <div class="population-kpi-grid">
+                    <article class="section-card population-kpi-card">
+                        <small>Total Penduduk</small>
+                        <h3>{{ number_format($latestTotal, 0, ',', '.') }}</h3>
+                        <p>Jiwa</p>
+                    </article>
+                    <article class="section-card population-kpi-card">
+                        <small>Kepala Keluarga</small>
+                        <h3>{{ number_format((int) ($latestPopulation?->households ?? 0), 0, ',', '.') }}</h3>
+                        <p>KK</p>
+                    </article>
+                    <article class="section-card population-kpi-card">
+                        <small>Laki-laki</small>
+                        <h3>{{ number_format((int) ($latestPopulation?->male ?? 0), 0, ',', '.') }}</h3>
+                        <p>{{ number_format($malePercent, 1, ',', '.') }}%</p>
+                    </article>
+                    <article class="section-card population-kpi-card">
+                        <small>Perempuan</small>
+                        <h3>{{ number_format((int) ($latestPopulation?->female ?? 0), 0, ',', '.') }}</h3>
+                        <p>{{ number_format($femalePercent, 1, ',', '.') }}%</p>
+                    </article>
+                </div>
+
+                <div class="population-layout">
+                    <article class="section-card population-chart-card">
+                        <div class="population-chart-card__head">
+                            <h3>Tren Penduduk per Tahun</h3>
+                            <small>Laki-laki dan Perempuan</small>
                         </div>
-                        <div class="stats-grid stats-grid--wide">
-                            @foreach ($populations->take(6) as $item)
-                                <article class="section-card stat-card">
-                                    <h3>{{ number_format($item->total(), 0, ',', '.') }} Jiwa</h3>
-                                    <p>Tahun {{ $item->year }} (L: {{ number_format($item->male, 0, ',', '.') }} | P: {{ number_format($item->female, 0, ',', '.') }})</p>
+                        <div class="population-chart-card__canvas-wrap">
+                            <canvas id="populationTrendChart"></canvas>
+                        </div>
+                    </article>
+
+                    <div class="population-side-grid">
+                        <article class="section-card population-chart-card">
+                            <div class="population-chart-card__head">
+                                <h3>Komposisi Jenis Kelamin</h3>
+                                <small>Data {{ $latestPopulation?->year ?? '-' }}</small>
+                            </div>
+                            <div class="population-chart-card__canvas-wrap population-chart-card__canvas-wrap--sm">
+                                <canvas id="populationGenderChart"></canvas>
+                            </div>
+                        </article>
+
+                        <article class="section-card population-insight-card">
+                            <h3>Ringkasan</h3>
+                            <ul>
+                                <li>
+                                    <span>Perubahan Tahunan</span>
+                                    <strong>{{ $growth >= 0 ? '+' : '' }}{{ number_format($growth, 0, ',', '.') }} Jiwa
+                                        @if ($growthPercent !== null)
+                                            ({{ $growthPercent >= 0 ? '+' : '' }}{{ number_format($growthPercent, 2, ',', '.') }}%)
+                                        @endif
+                                    </strong>
+                                </li>
+                                <li>
+                                    <span>Rasio L/P</span>
+                                    <strong>{{ number_format((float) ($latestPopulation?->male ?? 0), 0, ',', '.') }} : {{ number_format((float) ($latestPopulation?->female ?? 0), 0, ',', '.') }}</strong>
+                                </li>
+                                <li>
+                                    <span>Rata-rata Anggota KK</span>
+                                    <strong>
+                                        @if (($latestPopulation?->households ?? 0) > 0)
+                                            {{ number_format($latestTotal / (int) $latestPopulation->households, 2, ',', '.') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </strong>
+                                </li>
+                            </ul>
+                        </article>
+                    </div>
+                </div>
+
+                <article class="section-card population-category-card">
+                    <div class="population-chart-card__head">
+                        <h3>Statistik Kategori Penduduk</h3>
+                        <small>Umur, Pendidikan, Pekerjaan, Agama, dan Status Perkawinan</small>
+                    </div>
+                    @if ($populationStatsByCategory->isEmpty())
+                        <p class="population-category-card__empty">Data statistik kategori belum tersedia. Silakan input dari backend menu Kelola Statistik Penduduk.</p>
+                    @else
+                        @php
+                            $categoryMeta = \App\Models\VillagePopulationStat::categoryOptions();
+                        @endphp
+                        <div class="population-category-grid">
+                            @foreach ($populationStatsByCategory as $category => $rows)
+                                @php
+                                    $meta = $categoryMeta[$category] ?? ['label' => ucfirst(str_replace('_', ' ', $category)), 'icon' => 'fa-solid fa-chart-pie', 'color' => '#0c3f7f'];
+                                    $maxValue = (int) $rows->max('value');
+                                    $canvasId = 'populationCategoryChart'.\Illuminate\Support\Str::studly($category);
+                                @endphp
+                                <article class="population-category-panel" style="--category-color: {{ $meta['color'] }}">
+                                    <header>
+                                        <span><i class="{{ $meta['icon'] }}"></i></span>
+                                        <div>
+                                            <h4>{{ $meta['label'] }}</h4>
+                                            <small>{{ $rows->count() }} indikator</small>
+                                        </div>
+                                    </header>
+                                    <ul>
+                                        @foreach ($rows as $row)
+                                            @php
+                                                $percent = $maxValue > 0 ? ($row->value / $maxValue) * 100 : 0;
+                                            @endphp
+                                            <li>
+                                                <div class="population-category-panel__label">
+                                                    <span>{{ $row->label }}</span>
+                                                    <strong>{{ number_format((int) $row->value, 0, ',', '.') }}{{ $row->unit ? ' '.$row->unit : '' }}</strong>
+                                                </div>
+                                                <div class="population-category-panel__bar">
+                                                    <i style="width: {{ number_format($percent, 2, '.', '') }}%"></i>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                    <div class="population-category-panel__chart-wrap">
+                                        <canvas id="{{ $canvasId }}"></canvas>
+                                    </div>
                                 </article>
                             @endforeach
                         </div>
+                    @endif
+                </article>
+
+                <article class="section-card population-table-card">
+                    <div class="population-chart-card__head">
+                        <h3>Riwayat Data Penduduk</h3>
+                        <small>Menampilkan {{ $populations->count() }} tahun data</small>
                     </div>
-                @endif
-            </article>
+                    <div class="population-table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tahun</th>
+                                    <th>Laki-laki</th>
+                                    <th>Perempuan</th>
+                                    <th>Total</th>
+                                    <th>Kepala Keluarga</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($populations as $item)
+                                    <tr>
+                                        <td>{{ $item->year }}</td>
+                                        <td>{{ number_format((int) $item->male, 0, ',', '.') }}</td>
+                                        <td>{{ number_format((int) $item->female, 0, ',', '.') }}</td>
+                                        <td>{{ number_format($item->total(), 0, ',', '.') }}</td>
+                                        <td>{{ number_format((int) $item->households, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            @endif
         </div>
     </section>
 @elseif ($tab === 'apbdes')
@@ -178,7 +340,17 @@
                     @foreach ($apbdesItems as $item)
                         <article class="section-card infographic-card">
                             <div class="infographic-card__head">
-                                <span style="background: #0f5e9f">{{ $item->typeLabel() }}</span>
+                                <span style="background: #0f5e9f">
+                                    @if ($item->type === 'belanja')
+                                        <i class="fa-solid fa-bag-shopping" aria-label="Belanja"></i>
+                                    @elseif ($item->type === 'pendapatan')
+                                        <i class="fa-solid fa-wallet" aria-label="Pendapatan"></i>
+                                    @elseif ($item->type === 'pembiayaan')
+                                        <i class="fa-solid fa-hand-holding-dollar" aria-label="Pembiayaan"></i>
+                                    @else
+                                        {{ $item->typeLabel() }}
+                                    @endif
+                                </span>
                                 <h3>{{ $item->category }}</h3>
                             </div>
                             <p>Rp {{ number_format((int) $item->amount, 0, ',', '.') }}</p>
@@ -203,7 +375,13 @@
                     @foreach ($otherInfographics as $item)
                         <article class="section-card infographic-card">
                             <div class="infographic-card__head">
-                                <span style="background: {{ $item->color ?: '#64748b' }}">{{ $item->icon ?: 'INFO' }}</span>
+                                <span style="background: {{ $item->color ?: '#64748b' }}">
+                                    @if (\Illuminate\Support\Str::startsWith((string) $item->icon, 'fa-'))
+                                        <i class="{{ $item->icon }}"></i>
+                                    @else
+                                        {{ $item->icon ?: 'INFO' }}
+                                    @endif
+                                </span>
                                 <h3>{{ $item->title }}</h3>
                             </div>
                             <p>
@@ -212,6 +390,11 @@
                                     {{ $item->unit }}
                                 @endif
                             </p>
+                            @if (!empty($item->category))
+                                <div class="infographic-card__meta">
+                                    <small>Kategori: {{ $item->categoryLabel() }}</small>
+                                </div>
+                            @endif
                             @if ($item->description)
                                 <div class="infographic-card__meta"><small>{{ $item->description }}</small></div>
                             @endif
@@ -224,6 +407,7 @@
 @endif
 
 @if ($tab === 'aset')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
@@ -271,14 +455,14 @@
             const markerById = new Map();
             const itemById = new Map();
             const typeKeys = Object.keys(typeOptions || {});
-            const typeShortLabel = {
-                aset_desa: 'AD',
-                umkm: 'UM',
-                fasilitas_umum: 'FU',
-                pasar: 'PS',
-                pendidikan: 'PD',
-                kesehatan: 'KS',
-                lainnya: 'LN',
+            const typeFaIcon = {
+                aset_desa: 'fa-solid fa-landmark',
+                umkm: 'fa-solid fa-store',
+                fasilitas_umum: 'fa-solid fa-building',
+                pasar: 'fa-solid fa-shop',
+                pendidikan: 'fa-solid fa-school',
+                kesehatan: 'fa-solid fa-hospital',
+                lainnya: 'fa-solid fa-location-dot',
             };
             const typeCount = {};
             typeKeys.forEach((key) => {
@@ -320,19 +504,8 @@
                     typeCount[item.type] += 1;
                 }
 
-                const svgIcon = (() => {
-                    const badge = typeShortLabel[item.type] || 'LN';
-                    const color = item.color || '#1d4ed8';
-                    const svg = `
-                        <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'>
-                            <rect x='2' y='2' width='22' height='22' rx='6' fill='white' stroke='${color}' stroke-width='2'/>
-                            <text x='13' y='16' text-anchor='middle' font-family='Arial, sans-serif' font-size='9' font-weight='700' fill='${color}'>${badge}</text>
-                        </svg>
-                    `;
-                    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-                })();
-
-                const iconHtml = `<span class="asset-marker__icon asset-marker__icon--svg" style="background-image:url('${svgIcon}')"></span>`;
+                const iconClass = typeFaIcon[item.type] || 'fa-solid fa-location-dot';
+                const iconHtml = `<span class="asset-marker__icon asset-marker__icon--fa"><i class="${iconClass}" aria-hidden="true"></i></span>`;
 
                 const markerIcon = L.divIcon({
                     className: 'asset-marker-badge-wrap',
@@ -548,32 +721,114 @@
     </script>
 @endif
 
+@if ($tab === 'penduduk')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+@endif
+
+@if ($tab === 'lainnya')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+@endif
+
+@if ($tab === 'apbdes')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+@endif
+
 @if ($tab === 'penduduk' && $populationChartItems->isNotEmpty())
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script>
         (function () {
-            const canvas = document.getElementById('populationTrendChart');
-            if (!canvas || typeof Chart === 'undefined') return;
+            const trendCanvas = document.getElementById('populationTrendChart');
+            const genderCanvas = document.getElementById('populationGenderChart');
+            if ((!trendCanvas && !genderCanvas) || typeof Chart === 'undefined') return;
 
-            const rows = @json($populationChartItems);
+            const rows = (@json($populationChartItems) || []).slice().sort((a, b) => Number(a.year) - Number(b.year));
             const labels = rows.map((row) => row.year);
             const male = rows.map((row) => row.male);
             const female = rows.map((row) => row.female);
+            const latest = rows[rows.length - 1] || { male: 0, female: 0 };
+            const categoryRows = @json($populationStatsByCategory);
+            const categoryMeta = @json(\App\Models\VillagePopulationStat::categoryOptions());
 
-            new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'Laki-laki', data: male, borderColor: '#1b63bf', backgroundColor: 'rgba(27,99,191,.14)', tension: .3, fill: true },
-                        { label: 'Perempuan', data: female, borderColor: '#ec4899', backgroundColor: 'rgba(236,72,153,.1)', tension: .3, fill: true },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } },
-                }
+            if (trendCanvas) {
+                new Chart(trendCanvas, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Laki-laki', data: male, borderColor: '#1b63bf', backgroundColor: 'rgba(27,99,191,.14)', tension: .3, fill: true },
+                            { label: 'Perempuan', data: female, borderColor: '#ec4899', backgroundColor: 'rgba(236,72,153,.1)', tension: .3, fill: true },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                    }
+                });
+            }
+
+            if (genderCanvas) {
+                new Chart(genderCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Laki-laki', 'Perempuan'],
+                        datasets: [{
+                            data: [latest.male || 0, latest.female || 0],
+                            backgroundColor: ['#1b63bf', '#ec4899'],
+                            borderWidth: 0,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: { legend: { position: 'bottom' } },
+                    },
+                });
+            }
+
+            Object.entries(categoryRows || {}).forEach(([key, rows]) => {
+                const canvasId = `populationCategoryChart${key.replace(/(^|_)([a-z])/g, (_, __, chr) => chr.toUpperCase())}`;
+                const canvas = document.getElementById(canvasId);
+                if (!canvas || !Array.isArray(rows) || !rows.length) return;
+
+                const labels = rows.map((row) => row.label);
+                const values = rows.map((row) => Number(row.value || 0));
+                const color = (categoryMeta[key] && categoryMeta[key].color) ? categoryMeta[key].color : '#0c3f7f';
+                const bgColor = `${color}33`;
+
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: bgColor,
+                            borderColor: color,
+                            borderWidth: 1.2,
+                            borderRadius: 6,
+                            maxBarThickness: 18,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                        },
+                        scales: {
+                            x: {
+                                ticks: { display: false },
+                                grid: { display: false },
+                            },
+                            y: {
+                                ticks: { display: false },
+                                grid: { color: '#e9eff9' },
+                                beginAtZero: true,
+                            },
+                        },
+                    },
+                });
             });
         })();
     </script>

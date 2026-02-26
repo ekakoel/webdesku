@@ -33,13 +33,19 @@
                             Kelola Galeri
                         </a>
                         <a href="{{ route('admin.village-assets.index') }}" class="inline-flex items-center rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
-                            Kelola Infografis Desa
+                            Kelola Aset Desa (Map)
                         </a>
                         <a href="{{ route('admin.village-populations.index') }}" class="inline-flex items-center rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
                             Kelola Penduduk (Infografis)
                         </a>
+                        <a href="{{ route('admin.village-population-stats.index') }}" class="inline-flex items-center rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800">
+                            Kelola Statistik Penduduk
+                        </a>
                         <a href="{{ route('admin.village-apbdes-items.index') }}" class="inline-flex items-center rounded-md bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
                             Kelola APBDes (Infografis)
+                        </a>
+                        <a href="{{ route('admin.village-transparency-items.index') }}" class="inline-flex items-center rounded-md bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">
+                            Kelola Transparansi Desa
                         </a>
                         <a href="{{ route('admin.village-infographic-items.index') }}" class="inline-flex items-center rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
                             Kelola Infografis Lainnya

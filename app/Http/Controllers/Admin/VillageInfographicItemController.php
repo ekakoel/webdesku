@@ -13,17 +13,37 @@ class VillageInfographicItemController extends Controller
 {
     public function index(): View
     {
+        $category = (string) request()->query('category', 'all');
+        $q = trim((string) request()->query('q', ''));
+
         $items = VillageInfographicItem::query()
+            ->when($category !== 'all', fn ($query) => $query->where('category', $category))
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($subQuery) use ($q) {
+                    $subQuery->where('title', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%")
+                        ->orWhere('value', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('category')
             ->orderBy('sort_order')
             ->latest('id')
             ->paginate(12);
 
-        return view('admin.village-infographic-items.index', compact('items'));
+        return view('admin.village-infographic-items.index', [
+            'items' => $items,
+            'category' => $category,
+            'q' => $q,
+            'categoryOptions' => VillageInfographicItem::categoryOptions(),
+        ]);
     }
 
     public function create(): View
     {
-        return view('admin.village-infographic-items.create', ['item' => new VillageInfographicItem()]);
+        return view('admin.village-infographic-items.create', [
+            'item' => new VillageInfographicItem(),
+            'categoryOptions' => VillageInfographicItem::categoryOptions(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -46,7 +66,10 @@ class VillageInfographicItemController extends Controller
 
     public function edit(VillageInfographicItem $villageInfographicItem): View
     {
-        return view('admin.village-infographic-items.edit', ['item' => $villageInfographicItem]);
+        return view('admin.village-infographic-items.edit', [
+            'item' => $villageInfographicItem,
+            'categoryOptions' => VillageInfographicItem::categoryOptions(),
+        ]);
     }
 
     public function update(Request $request, VillageInfographicItem $villageInfographicItem): RedirectResponse
@@ -70,6 +93,7 @@ class VillageInfographicItemController extends Controller
     private function rules(): array
     {
         return [
+            'category' => ['required', 'string', 'in:'.implode(',', array_keys(VillageInfographicItem::categoryOptions()))],
             'title' => ['required', 'string', 'max:255'],
             'value' => ['nullable', 'string', 'max:120'],
             'unit' => ['nullable', 'string', 'max:50'],
@@ -81,4 +105,3 @@ class VillageInfographicItemController extends Controller
         ];
     }
 }
-

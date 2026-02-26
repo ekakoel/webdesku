@@ -62,13 +62,19 @@
                                 {{ __('Kelola Galeri') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('admin.village-assets.index')">
-                                {{ __('Kelola Infografis Desa') }}
+                                {{ __('Kelola Aset Desa (Map)') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('admin.village-populations.index')">
                                 {{ __('Kelola Penduduk (Infografis)') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-population-stats.index')">
+                                {{ __('Kelola Statistik Penduduk') }}
+                            </x-dropdown-link>
                             <x-dropdown-link :href="route('admin.village-apbdes-items.index')">
                                 {{ __('Kelola APBDes (Infografis)') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.village-transparency-items.index')">
+                                {{ __('Kelola Transparansi Desa') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('admin.village-infographic-items.index')">
                                 {{ __('Kelola Infografis Lainnya') }}
@@ -161,13 +167,19 @@
                         {{ __('Kelola Galeri') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.village-assets.index')">
-                        {{ __('Kelola Infografis Desa') }}
+                        {{ __('Kelola Aset Desa (Map)') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.village-populations.index')">
                         {{ __('Kelola Penduduk (Infografis)') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-population-stats.index')">
+                        {{ __('Kelola Statistik Penduduk') }}
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.village-apbdes-items.index')">
                         {{ __('Kelola APBDes (Infografis)') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.village-transparency-items.index')">
+                        {{ __('Kelola Transparansi Desa') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.village-infographic-items.index')">
                         {{ __('Kelola Infografis Lainnya') }}

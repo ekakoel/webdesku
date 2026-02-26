@@ -5,26 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class VillageInfographicItem extends Model
+class VillageTransparencyItem extends Model
 {
     public const CATEGORIES = [
-        'umum' => 'Umum',
-        'layanan' => 'Layanan',
-        'kelembagaan' => 'Kelembagaan',
-        'ekonomi' => 'Ekonomi',
-        'sosial' => 'Sosial',
-        'lingkungan' => 'Lingkungan',
+        'apbdes' => 'APBDes',
+        'realisasi' => 'Realisasi Anggaran',
+        'program' => 'Program/Kegiatan',
+        'pengadaan' => 'Pengadaan',
+        'peraturan' => 'Peraturan Desa',
+        'laporan' => 'Laporan Publik',
     ];
 
     protected $fillable = [
         'village_id',
+        'fiscal_year',
         'category',
         'title',
-        'value',
-        'unit',
+        'amount',
         'description',
-        'icon',
-        'color',
+        'document_url',
         'sort_order',
         'is_published',
         'published_at',
@@ -33,6 +32,8 @@ class VillageInfographicItem extends Model
     protected $casts = [
         'is_published' => 'boolean',
         'published_at' => 'datetime',
+        'amount' => 'integer',
+        'fiscal_year' => 'integer',
     ];
 
     public function village(): BelongsTo
@@ -50,3 +51,4 @@ class VillageInfographicItem extends Model
         return self::CATEGORIES[$this->category] ?? ucfirst((string) $this->category);
     }
 }
+

@@ -10,7 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class VillageAssetController extends Controller
@@ -63,11 +62,6 @@ class VillageAssetController extends Controller
         $validated['village_id'] = $village->id;
         $validated['is_published'] = (bool) ($validated['is_published'] ?? false);
         $validated['published_at'] = $validated['is_published'] ? now() : null;
-        $validated['icon_path'] = $request->hasFile('icon')
-            ? $request->file('icon')->store('village-assets/icons', 'public')
-            : null;
-
-        unset($validated['icon'], $validated['remove_icon']);
 
         VillageAsset::query()->create($validated);
 
@@ -87,21 +81,6 @@ class VillageAssetController extends Controller
         $validated = $request->validate($this->rules());
         $this->fillCoordinatesFromMapLink($validated, app(GoogleMapsLinkResolver::class));
 
-        if ((bool) ($validated['remove_icon'] ?? false)) {
-            if ($villageAsset->hasLocalIcon()) {
-                Storage::disk('public')->delete($villageAsset->icon_path);
-            }
-            $villageAsset->icon_path = null;
-        }
-
-        if ($request->hasFile('icon')) {
-            if ($villageAsset->hasLocalIcon()) {
-                Storage::disk('public')->delete($villageAsset->icon_path);
-            }
-            $villageAsset->icon_path = $request->file('icon')->store('village-assets/icons', 'public');
-        }
-
-        unset($validated['icon'], $validated['remove_icon']);
         $villageAsset->fill($validated);
         $villageAsset->is_published = (bool) ($validated['is_published'] ?? false);
         $villageAsset->published_at = $villageAsset->is_published ? ($villageAsset->published_at ?? now()) : null;
@@ -112,10 +91,6 @@ class VillageAssetController extends Controller
 
     public function destroy(VillageAsset $villageAsset): RedirectResponse
     {
-        if ($villageAsset->hasLocalIcon()) {
-            Storage::disk('public')->delete($villageAsset->icon_path);
-        }
-
         $villageAsset->delete();
 
         return redirect()->route('admin.village-assets.index')->with('status', 'Data aset desa berhasil dihapus.');
@@ -164,8 +139,6 @@ class VillageAssetController extends Controller
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'map_url' => ['nullable', 'url', 'max:2000'],
-            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
-            'remove_icon' => ['nullable', 'boolean'],
             'contact_person' => ['nullable', 'string', 'max:120'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],

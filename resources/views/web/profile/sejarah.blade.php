@@ -13,12 +13,12 @@
             @if (!empty($pageMeta['subtitle']))
                 <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
             @endif
-            <p style="margin-top:.7rem;">{{ $sejarah['ringkasan'] ?? ($village?->history ?? 'Data sejarah desa belum tersedia.') }}</p>
-            @if (!empty($sejarah['sumber']))
+            <p style="margin-top:.7rem;">{{ $village->history ?? 'Data sejarah desa belum tersedia.' }}</p>
+            {{-- @if (!empty($sejarah['sumber']))
                 <p style="margin-top:.5rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $sejarah['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $sejarah['sumber'] }}</a>
                 </p>
-            @endif
+            @endif --}}
         </article>
     </div>
 </section>
@@ -73,12 +73,12 @@
 </section>
 @endif
 
-<section class="section-wrap section-wrap--last">
+{{-- <section class="section-wrap section-wrap--last">
     <div class="container-grid">
         <article class="section-card greeting-card">
             <h2>Ringkasan Sejarah pada Database Desa</h2>
             <p>{{ $village?->history ?? '-' }}</p>
         </article>
     </div>
-</section>
+</section> --}}
 @endsection

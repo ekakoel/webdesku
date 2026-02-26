@@ -37,21 +37,6 @@
         <input id="address" name="address" type="text" value="{{ old('address', $asset->address ?? '') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
     </div>
 
-    <div>
-        <label for="icon" class="block text-sm font-medium text-gray-700">Icon Marker (Opsional)</label>
-        <input id="icon" name="icon" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-        <p class="mt-1 text-xs text-gray-500">Disarankan ikon persegi (64x64 atau 128x128), transparan PNG/SVG.</p>
-        @if (!empty($asset?->icon_url))
-            <div class="mt-2 flex items-center gap-3">
-                <img src="{{ $asset->icon_url }}" alt="{{ $asset->name }}" class="h-12 w-12 rounded object-contain border border-gray-200 bg-white p-1">
-                <label class="inline-flex items-center gap-2">
-                    <input type="checkbox" name="remove_icon" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
-                    <span class="text-sm text-gray-700">Hapus icon saat ini</span>
-                </label>
-            </div>
-        @endif
-    </div>
-
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label for="contact_person" class="block text-sm font-medium text-gray-700">Penanggung Jawab</label>

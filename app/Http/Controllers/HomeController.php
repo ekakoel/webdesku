@@ -15,8 +15,10 @@ use App\Models\VillageAsset;
 use App\Models\VillageApbdesItem;
 use App\Models\VillageInfographicItem;
 use App\Models\VillagePopulation;
+use App\Models\VillagePopulationStat;
 use App\Models\VillageProfilePage;
 use App\Models\VillageService;
+use App\Models\VillageTransparencyItem;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -417,9 +419,46 @@ class HomeController extends Controller
 
     public function transparansi(): View
     {
-        return view('web.page', [
-            'title' => 'Transparansi',
-            'description' => 'Informasi transparansi anggaran dan laporan desa akan ditampilkan di halaman ini.',
+        $village = $this->currentVillage();
+        $year = (int) request()->query('year', 0);
+
+        $apbdesYears = Schema::hasTable('village_apbdes_items')
+            ? $this->publishedApbdesQuery($village)->select('fiscal_year')->distinct()->orderByDesc('fiscal_year')->pluck('fiscal_year')
+            : collect();
+        $selectedYear = $year > 0 ? $year : (int) ($apbdesYears->first() ?? 0);
+        $apbdesItems = ($selectedYear > 0 && Schema::hasTable('village_apbdes_items'))
+            ? $this->publishedApbdesQuery($village)
+                ->where('fiscal_year', $selectedYear)
+                ->orderBy('type')
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+        $apbdesSummary = [
+            'pendapatan' => (int) $apbdesItems->where('type', 'pendapatan')->sum('amount'),
+            'belanja' => (int) $apbdesItems->where('type', 'belanja')->sum('amount'),
+            'pembiayaan' => (int) $apbdesItems->where('type', 'pembiayaan')->sum('amount'),
+        ];
+
+        $transparencyItems = Schema::hasTable('village_transparency_items')
+            ? $this->publishedTransparencyQuery($village)
+                ->when($selectedYear > 0, fn (Builder $query) => $query->where(function (Builder $subQuery) use ($selectedYear) {
+                    $subQuery->where('fiscal_year', $selectedYear)->orWhereNull('fiscal_year');
+                }))
+                ->orderByDesc('fiscal_year')
+                ->orderBy('category')
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+        $transparencyCategories = $transparencyItems->groupBy('category');
+
+        return view('web.transparency.index', [
+            'village' => $village,
+            'apbdesYears' => $apbdesYears,
+            'selectedYear' => $selectedYear > 0 ? $selectedYear : null,
+            'apbdesItems' => $apbdesItems,
+            'apbdesSummary' => $apbdesSummary,
+            'transparencyItems' => $transparencyItems,
+            'transparencyCategories' => $transparencyCategories,
         ]);
     }
 
@@ -438,6 +477,7 @@ class HomeController extends Controller
                 'assetMapItems' => collect(),
                 'populations' => collect(),
                 'populationChartItems' => collect(),
+                'populationStatsByCategory' => collect(),
                 'apbdesItems' => collect(),
                 'apbdesSummary' => ['pendapatan' => 0, 'belanja' => 0, 'pembiayaan' => 0],
                 'apbdesYears' => collect(),
@@ -486,7 +526,7 @@ class HomeController extends Controller
             })
             ->values();
 
-        $assets = $query->paginate(12)->withQueryString();
+        $assets = $query->paginate(6)->withQueryString();
 
         $populations = Schema::hasTable('village_populations')
             ? $this->publishedPopulationQuery($village)->orderByDesc('year')->get()
@@ -496,6 +536,18 @@ class HomeController extends Controller
             'male' => (int) $item->male,
             'female' => (int) $item->female,
         ])->values();
+        $populationStatsByCategory = Schema::hasTable('village_population_stats')
+            ? $this->publishedPopulationStatsQuery($village)
+                ->when(
+                    $populations->isNotEmpty(),
+                    fn (Builder $query) => $query->where('year', (int) ($populations->first()->year ?? now()->year))
+                )
+                ->orderBy('category')
+                ->orderBy('sort_order')
+                ->orderBy('label')
+                ->get()
+                ->groupBy('category')
+            : collect();
 
         $apbdesYears = Schema::hasTable('village_apbdes_items')
             ? $this->publishedApbdesQuery($village)->select('fiscal_year')->distinct()->orderByDesc('fiscal_year')->pluck('fiscal_year')
@@ -520,6 +572,7 @@ class HomeController extends Controller
             'assetMapItems' => $mapItems,
             'populations' => $populations,
             'populationChartItems' => $populationChartItems,
+            'populationStatsByCategory' => $populationStatsByCategory,
             'apbdesItems' => $apbdesItems,
             'apbdesSummary' => $apbdesSummary,
             'apbdesYears' => $apbdesYears,
@@ -910,6 +963,13 @@ class HomeController extends Controller
             ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
     }
 
+    private function publishedPopulationStatsQuery(?Village $village): Builder
+    {
+        return VillagePopulationStat::query()
+            ->when(Schema::hasColumn('village_population_stats', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
+            ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+    }
+
     private function publishedApbdesQuery(?Village $village): Builder
     {
         return VillageApbdesItem::query()
@@ -921,6 +981,13 @@ class HomeController extends Controller
     {
         return VillageInfographicItem::query()
             ->when(Schema::hasColumn('village_infographic_items', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
+            ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+    }
+
+    private function publishedTransparencyQuery(?Village $village): Builder
+    {
+        return VillageTransparencyItem::query()
+            ->when(Schema::hasColumn('village_transparency_items', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
             ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
     }
 

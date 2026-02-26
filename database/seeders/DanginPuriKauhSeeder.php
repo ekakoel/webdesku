@@ -14,8 +14,10 @@ use App\Models\VillageHeadMessage;
 use App\Models\VillageInfographicItem;
 use App\Models\VillageOfficial;
 use App\Models\VillagePopulation;
+use App\Models\VillagePopulationStat;
 use App\Models\VillageProfilePage;
 use App\Models\VillageService;
+use App\Models\VillageTransparencyItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -450,6 +452,63 @@ class DanginPuriKauhSeeder extends Seeder
             );
         }
 
+        $populationStats = [
+            'umur' => [
+                ['label' => '0 - 4 Tahun', 'value' => 1120],
+                ['label' => '5 - 17 Tahun', 'value' => 3065],
+                ['label' => '18 - 56 Tahun', 'value' => 9450],
+                ['label' => '57+ Tahun', 'value' => 2535],
+            ],
+            'pendidikan' => [
+                ['label' => 'Belum Sekolah', 'value' => 780],
+                ['label' => 'SD/Sederajat', 'value' => 2890],
+                ['label' => 'SMP/Sederajat', 'value' => 3410],
+                ['label' => 'SMA/Sederajat', 'value' => 6125],
+                ['label' => 'Diploma/Sarjana', 'value' => 2965],
+            ],
+            'pekerjaan' => [
+                ['label' => 'Pelajar/Mahasiswa', 'value' => 2650],
+                ['label' => 'Karyawan Swasta', 'value' => 3520],
+                ['label' => 'Wiraswasta/UMKM', 'value' => 2875],
+                ['label' => 'PNS/TNI/Polri', 'value' => 740],
+                ['label' => 'Lainnya', 'value' => 2385],
+            ],
+            'agama' => [
+                ['label' => 'Hindu', 'value' => 14890],
+                ['label' => 'Islam', 'value' => 730],
+                ['label' => 'Kristen', 'value' => 420],
+                ['label' => 'Katolik', 'value' => 120],
+                ['label' => 'Budha/Lainnya', 'value' => 10],
+            ],
+            'status_kawin' => [
+                ['label' => 'Belum Kawin', 'value' => 6120],
+                ['label' => 'Kawin', 'value' => 8650],
+                ['label' => 'Cerai Hidup', 'value' => 540],
+                ['label' => 'Cerai Mati', 'value' => 860],
+            ],
+        ];
+
+        $latestYear = (int) (collect($populationItems)->max('year') ?? now()->year);
+        foreach ($populationStats as $category => $rows) {
+            foreach ($rows as $index => $row) {
+                VillagePopulationStat::query()->updateOrCreate(
+                    [
+                        'village_id' => $village->id,
+                        'year' => $latestYear,
+                        'category' => $category,
+                        'label' => $row['label'],
+                    ],
+                    [
+                        'value' => (int) $row['value'],
+                        'unit' => 'Orang',
+                        'sort_order' => $index,
+                        'is_published' => true,
+                        'published_at' => now(),
+                    ]
+                );
+            }
+        }
+
         $apbdesItems = [
             ['fiscal_year' => 2025, 'type' => 'pendapatan', 'category' => 'Dana Desa', 'amount' => 1250000000],
             ['fiscal_year' => 2025, 'type' => 'pendapatan', 'category' => 'ADD', 'amount' => 760000000],
@@ -476,10 +535,72 @@ class DanginPuriKauhSeeder extends Seeder
             );
         }
 
+        $transparencyItems = [
+            [
+                'fiscal_year' => 2025,
+                'category' => 'apbdes',
+                'title' => 'Publikasi APBDes Tahun 2025',
+                'amount' => 2010000000,
+                'description' => 'Ringkasan APBDes tahun berjalan sebagai informasi publik desa.',
+                'document_url' => null,
+            ],
+            [
+                'fiscal_year' => 2025,
+                'category' => 'realisasi',
+                'title' => 'Laporan Realisasi Semester I Tahun 2025',
+                'amount' => 980000000,
+                'description' => 'Laporan realisasi anggaran semester I dan perkembangan kegiatan desa.',
+                'document_url' => null,
+            ],
+            [
+                'fiscal_year' => 2025,
+                'category' => 'program',
+                'title' => 'Program Prioritas Pembangunan Desa',
+                'amount' => null,
+                'description' => 'Daftar program prioritas tahunan yang diputuskan melalui musyawarah desa.',
+                'document_url' => null,
+            ],
+            [
+                'fiscal_year' => 2025,
+                'category' => 'peraturan',
+                'title' => 'Perdes APBDes 2025',
+                'amount' => null,
+                'description' => 'Peraturan Desa terkait penetapan APBDes tahun anggaran 2025.',
+                'document_url' => null,
+            ],
+            [
+                'fiscal_year' => 2025,
+                'category' => 'laporan',
+                'title' => 'Laporan Akuntabilitas Pemerintah Desa',
+                'amount' => null,
+                'description' => 'Laporan pertanggungjawaban kinerja dan penggunaan anggaran.',
+                'document_url' => null,
+            ],
+        ];
+
+        foreach ($transparencyItems as $index => $item) {
+            VillageTransparencyItem::query()->updateOrCreate(
+                [
+                    'village_id' => $village->id,
+                    'fiscal_year' => $item['fiscal_year'],
+                    'category' => $item['category'],
+                    'title' => $item['title'],
+                ],
+                [
+                    'amount' => $item['amount'],
+                    'description' => $item['description'],
+                    'document_url' => $item['document_url'],
+                    'sort_order' => $index,
+                    'is_published' => true,
+                    'published_at' => now(),
+                ]
+            );
+        }
+
         $otherInfographics = [
-            ['title' => 'Jumlah Banjar', 'value' => '12', 'unit' => 'banjar', 'icon' => 'BNJ', 'color' => '#0c3f7f'],
-            ['title' => 'UMKM Terdaftar', 'value' => '87', 'unit' => 'unit', 'icon' => 'UMKM', 'color' => '#16a34a'],
-            ['title' => 'Kader PKK Aktif', 'value' => '54', 'unit' => 'orang', 'icon' => 'PKK', 'color' => '#ec4899'],
+            ['category' => 'kelembagaan', 'title' => 'Jumlah Banjar', 'value' => '12', 'unit' => 'banjar', 'icon' => 'fa-solid fa-people-roof', 'color' => '#0c3f7f'],
+            ['category' => 'ekonomi', 'title' => 'UMKM Terdaftar', 'value' => '87', 'unit' => 'unit', 'icon' => 'fa-solid fa-store', 'color' => '#16a34a'],
+            ['category' => 'sosial', 'title' => 'Kader PKK Aktif', 'value' => '54', 'unit' => 'orang', 'icon' => 'fa-solid fa-people-group', 'color' => '#ec4899'],
         ];
 
         foreach ($otherInfographics as $index => $item) {
@@ -489,6 +610,7 @@ class DanginPuriKauhSeeder extends Seeder
                     'title' => $item['title'],
                 ],
                 [
+                    'category' => $item['category'] ?? 'umum',
                     'value' => $item['value'],
                     'unit' => $item['unit'],
                     'icon' => $item['icon'],

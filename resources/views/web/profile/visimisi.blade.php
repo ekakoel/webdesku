@@ -13,11 +13,11 @@
             @if (!empty($pageMeta['subtitle']))
                 <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
             @endif
-            @if (!empty($vm['sumber']))
+            {{-- @if (!empty($vm['sumber']))
                 <p style="margin-top:.45rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $vm['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $vm['sumber'] }}</a>
                 </p>
-            @endif
+            @endif --}}
         </article>
     </div>
 </section>

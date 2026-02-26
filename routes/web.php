@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\VillageApbdesItemController as AdminVillageApbdes
 use App\Http\Controllers\Admin\VillageHeadMessageController as AdminVillageHeadMessageController;
 use App\Http\Controllers\Admin\VillageInfographicItemController as AdminVillageInfographicItemController;
 use App\Http\Controllers\Admin\VillagePopulationController as AdminVillagePopulationController;
+use App\Http\Controllers\Admin\VillagePopulationStatController as AdminVillagePopulationStatController;
+use App\Http\Controllers\Admin\VillageTransparencyItemController as AdminVillageTransparencyItemController;
 use App\Http\Controllers\Admin\VillageOfficialController as AdminVillageOfficialController;
 use App\Http\Controllers\Admin\VillageMapController;
 use App\Http\Controllers\Admin\VillageProfilePageController as AdminVillageProfilePageController;
@@ -75,6 +77,8 @@ Route::middleware(['auth', 'verified', 'role:aparat'])->prefix('admin')->name('a
     Route::resource('village-assets', AdminVillageAssetController::class)->except(['show']);
     Route::post('village-assets/resolve-map-link', [AdminVillageAssetController::class, 'resolveMapLink'])->name('village-assets.resolve-map-link');
     Route::resource('village-populations', AdminVillagePopulationController::class)->except(['show']);
+    Route::resource('village-population-stats', AdminVillagePopulationStatController::class)->except(['show']);
+    Route::resource('village-transparency-items', AdminVillageTransparencyItemController::class)->except(['show']);
     Route::resource('village-apbdes-items', AdminVillageApbdesItemController::class)->except(['show']);
     Route::resource('village-infographic-items', AdminVillageInfographicItemController::class)->except(['show']);
     Route::resource('profile-pages', AdminVillageProfilePageController::class)

@@ -16,11 +16,11 @@
             @elseif (!empty($org['pengantar']))
                 <p style="margin-top:.45rem; color:#64748b;">{{ $org['pengantar'] }}</p>
             @endif
-            @if (!empty($org['sumber']))
+            {{-- @if (!empty($org['sumber']))
                 <p style="margin-top:.45rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $org['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $org['sumber'] }}</a>
                 </p>
-            @endif
+            @endif --}}
         </article>
     </div>
 </section>

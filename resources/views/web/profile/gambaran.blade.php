@@ -16,11 +16,11 @@
                 <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
             @endif
             <p style="margin-top:.65rem; color:#475569;">{{ $g['deskripsi'] ?? ($village?->description ?? 'Data gambaran umum desa belum tersedia.') }}</p>
-            @if (!empty($g['sumber']))
+            {{-- @if (!empty($g['sumber']))
                 <p style="margin-top:.5rem; color:#64748b; font-size:.86rem;">
                     Sumber data: <a href="{{ $g['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $g['sumber'] }}</a>
                 </p>
-            @endif
+            @endif --}}
         </article>
     </div>
 </section>

@@ -97,6 +97,11 @@ class Village extends Model
         return $this->hasMany(VillagePopulation::class);
     }
 
+    public function populationStats(): HasMany
+    {
+        return $this->hasMany(VillagePopulationStat::class);
+    }
+
     public function apbdesItems(): HasMany
     {
         return $this->hasMany(VillageApbdesItem::class);
@@ -105,5 +110,10 @@ class Village extends Model
     public function infographicItems(): HasMany
     {
         return $this->hasMany(VillageInfographicItem::class);
+    }
+
+    public function transparencyItems(): HasMany
+    {
+        return $this->hasMany(VillageTransparencyItem::class);
     }
 }
