@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Hotfix: prevent stale modal backdrops from blocking admin interactions. */
+.admin-area div.fixed.inset-0.transform.transition-all {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.admin-area div.fixed.inset-0.overflow-y-auto {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.admin-breadcrumb {
+    margin-top: 0.85rem;
+}
+
+.admin-breadcrumb__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.52rem 0.75rem;
+    list-style: none;
+    border: 1px solid #d4e3fb;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f7fbff 0%, #eef5ff 100%);
+}
+
+.admin-breadcrumb__list li {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #35567e;
+    line-height: 1.35;
+}
+
+.admin-breadcrumb__list a {
+    color: #0f4f98;
+    text-decoration: none;
+    padding: 0.18rem 0.28rem;
+    border-radius: 6px;
+}
+
+.admin-breadcrumb__list a:hover {
+    background: #e2eeff;
+}
+
+.admin-breadcrumb__sep {
+    color: #8aa5ca;
+    font-weight: 700;
+}
+
+.admin-breadcrumb__group {
+    color: #54749b;
+    background: #eaf2ff;
+    border: 1px solid #d7e5fb;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+}
+
+.admin-breadcrumb__current span {
+    color: #0b3e78;
+    font-weight: 700;
+    background: #dbeafe;
+    border: 1px solid #c7ddfb;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+}
