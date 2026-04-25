@@ -1,0 +1,26 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-DZ-xJdjz.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/web.css": {
+    "file": "assets/web-BIAZiNSZ.css",
+    "src": "resources/css/web.css",
+    "isEntry": true,
+    "name": "web",
+    "names": [
+      "web.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CBbTb_k3.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
