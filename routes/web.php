@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\VillageMapController;
 use App\Http\Controllers\Admin\VillageProfilePageController as AdminVillageProfilePageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('identifyVillage')->group(function () {
@@ -52,7 +53,7 @@ Route::middleware('identifyVillage')->group(function () {
 });
 
 Route::get('/dashboard', function () {
-    if (auth()->user()?->isAparat()) {
+    if (Auth::user()?->isAparat()) {
         return redirect()->route('admin.dashboard');
     }
 
