@@ -15,7 +15,9 @@
                             @if ($slide->cta_url && $slide->cta_text)
                                 <a href="{{ $slide->cta_url }}" class="btn btn--light">{{ $slide->cta_text }}</a>
                             @endif
-                            <a href="{{ route('services') }}" class="btn btn--ghost">Jelajahi Layanan</a>
+                            @if ($moduleStates['services'] ?? false)
+                                <a href="{{ route('services') }}" class="btn btn--ghost">Jelajahi Layanan</a>
+                            @endif
                         </div>
                     </div>
                 </article>
@@ -28,8 +30,12 @@
                     <h1>{{ $village?->name ?? 'Website Desa' }}</h1>
                     <p>{{ $village?->description ?? 'Selamat datang di portal digital desa untuk layanan publik, berita, dan transparansi informasi.' }}</p>
                     <div class="hero__actions">
-                        <a href="{{ route('services') }}" class="btn btn--light">Jelajahi Layanan</a>
-                        <a href="{{ route('berita') }}" class="btn btn--ghost">Lihat Berita</a>
+                        @if ($moduleStates['services'] ?? false)
+                            <a href="{{ route('services') }}" class="btn btn--light">Jelajahi Layanan</a>
+                        @endif
+                        @if ($moduleStates['news'] ?? false)
+                            <a href="{{ route('berita') }}" class="btn btn--ghost">Lihat Berita</a>
+                        @endif
                     </div>
                 </div>
             </article>
@@ -43,182 +49,72 @@
     </div>
 </section>
 
-
-
-<section class="section-wrap">
-    <div class="container-grid">
-        <article class="section-card head-message-card">
-            <div class="head-message-card__content">
-                <span class="head-message-card__badge">Sambutan Kepala Desa</span>
-                <h2>{{ $headMessage?->position ?? 'Kepala Desa' }}</h2>
-                <p>{{ $headMessage?->message ?? ($village?->head_greeting ?? 'Kami berkomitmen menghadirkan pelayanan publik yang cepat, transparan, dan mudah diakses warga melalui portal digital desa.') }}</p>
-                <div class="head-message-card__person">
-                    <strong>{{ $headMessage?->name ?? ($village?->head_name ?? 'Kepala Desa') }}</strong>
-                    @if ($headMessage?->signature)
-                        <small>{{ $headMessage->signature }}</small>
+@if ($moduleStates['profile'] ?? false)
+    <div class="head-message-modal" data-head-message-modal hidden aria-hidden="true">
+        <div class="head-message-modal__backdrop" data-head-message-close></div>
+        <div class="head-message-modal__dialog section-card" role="dialog" aria-modal="true" aria-labelledby="headMessageModalTitle">
+            <button type="button" class="head-message-modal__close" data-head-message-close aria-label="Tutup modal sambutan">&times;</button>
+            <article class="head-message-card head-message-card--modal">
+                <div class="head-message-card__content">
+                    <span class="head-message-card__badge">Sambutan Kepala Desa</span>
+                    <h2 id="headMessageModalTitle">{{ $headMessage?->position ?? 'Kepala Desa' }}</h2>
+                    <p>{{ $headMessage?->message ?? ($village?->head_greeting ?? 'Kami berkomitmen menghadirkan pelayanan publik yang cepat, transparan, dan mudah diakses warga melalui portal digital desa.') }}</p>
+                    <div class="head-message-card__person">
+                        <strong>{{ $headMessage?->name ?? ($village?->head_name ?? 'Kepala Desa') }}</strong>
+                        @if ($headMessage?->signature)
+                            <small>{{ $headMessage->signature }}</small>
+                        @endif
+                    </div>
+                </div>
+                <div class="head-message-card__photo">
+                    @if ($headMessage?->photo_path)
+                        <img src="{{ \Illuminate\Support\Facades\Storage::url($headMessage->photo_path) }}" alt="{{ $headMessage?->name ?? 'Kepala Desa' }}">
+                    @else
+                        <div class="head-message-card__photo-fallback">
+                            {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($headMessage?->name ?? ($village?->head_name ?? 'KD'), 0, 2)) }}
+                        </div>
                     @endif
                 </div>
-            </div>
-            <div class="head-message-card__photo">
-                @if ($headMessage?->photo_path)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($headMessage->photo_path) }}" alt="{{ $headMessage->name }}">
-                @else
-                    <div class="head-message-card__photo-fallback">
-                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($headMessage?->name ?? ($village?->head_name ?? 'KD'), 0, 2)) }}
-                    </div>
-                @endif
-            </div>
-        </article>
-    </div>
-</section>
-<section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head">
-            <h2>Pengumuman Terbaru</h2>
-            <a href="{{ route('pengumuman') }}">Lihat Semua</a>
-        </div>
-        <div class="announcement-grid">
-            @forelse ($announcements as $item)
-                <article class="section-card announcement-card">
-                    <span class="announcement-card__type" style="background: {{ $item->typeColor() }}">
-                        <i class="{{ $item->typeIcon() }}" aria-hidden="true"></i> {{ $item->typeLabel() }}
-                    </span>
-                    <h3>{{ $item->title }}</h3>
-                    <p>{{ \Illuminate\Support\Str::limit(strip_tags($item->content), 135) }}</p>
-                    <small>{{ $item->published_at?->translatedFormat('d M Y') ?? $item->created_at?->translatedFormat('d M Y') }}</small>
-                </article>
-            @empty
-                <article class="section-card announcement-card">
-                    <h3>Belum ada pengumuman</h3>
-                    <p>Pengumuman dari admin desa akan tampil otomatis di sini.</p>
-                </article>
-            @endforelse
-        </div>
-    </div>
-</section>
-<section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head section-head--stacked">
-            <h2>SOTK</h2>
-            <p>Struktur Organisasi dan Tata Kerja {{ $village?->name ?? 'Desa' }}</p>
-        </div>
-        <div class="official-grid">
-            @forelse ($officials as $official)
-                <article class="section-card official-card">
-                    <div class="official-card__image" @if($official->photo_path) style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($official->photo_path) }}');" @endif>
-                        @if (!$official->photo_path)
-                            <span>{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($official->name, 0, 2)) }}</span>
-                        @endif
-                    </div>
-                    <div class="official-card__meta">
-                        <h3>{{ $official->name }}</h3>
-                        <p>{{ $official->position }}</p>
-                        @if ($official->unit)
-                            <small>{{ $official->unit }}</small>
-                        @endif
-                    </div>
-                </article>
-            @empty
-                <article class="section-card official-card official-card--empty">
-                    <div class="official-card__image"><span>AP</span></div>
-                    <div class="official-card__meta">
-                        <h3>Data aparatur belum tersedia</h3>
-                        <p>Tambahkan data Aparatur Desa dari panel admin untuk menampilkan struktur organisasi.</p>
-                    </div>
-                </article>
-            @endforelse
-        </div>
-        <div class="official-link-wrap">
-            <a href="{{ route('profil') }}" class="text-link">Lihat Struktur Lebih Lengkap</a>
-        </div>
-    </div>
-</section>
-
-<section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head">
-            <h2>Layanan Desa</h2>
-            <a href="{{ route('services') }}">Lihat Semua</a>
-        </div>
-        <div class="service-grid">
-            @foreach ($services as $service)
-                <article class="section-card service-card service-card--clickable">
-                    <a href="{{ route('services.show', $service->slug) }}" class="service-card__link" aria-label="{{ $service->name }}">
-                        <span>{{ $service->icon ?: 'SV' }}</span>
-                        <h3>{{ $service->name }}</h3>
-                        <p>{{ \Illuminate\Support\Str::limit(strip_tags($service->description), 110) }}</p>
-                        <div class="service-card__meta">
-                            <small>{{ count($service->requirementsList()) }} persyaratan</small>
-                            <small>{{ count($service->processList()) }} langkah</small>
-                            <small>SLA {{ (int) ($service->sla_target_hours ?? 72) }} jam</small>
-                        </div>
-                        <strong class="service-card__cta">Ajukan Layanan</strong>
-                    </a>
-                </article>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-<section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head section-head--stacked">
-            <h2>Statistik Desa</h2>
-            <p>Komposisi penduduk dan indikator wilayah desa ditampilkan lebih ringkas dan mudah dibaca.</p>
-        </div>
-        <div class="split split--stats">
-            <article class="section-card demographics-card">
-                <div class="demographics-card__head">
-                    <h3>Komposisi Penduduk</h3>
-                    <small>Laki-laki vs Perempuan</small>
-                </div>
-                <div class="demographics-card__chart-wrap">
-                    <canvas id="genderPopulationChart" aria-label="Grafik komposisi penduduk berdasarkan jenis kelamin"></canvas>
-                </div>
-                @if (!($populationChart['has_data'] ?? false))
-                    <p class="demographics-card__empty">Data penduduk berdasarkan jenis kelamin belum tersedia.</p>
-                @endif
             </article>
-            <div class="stats-grid stats-grid--wide">
-                @foreach ($stats as $item)
-                    <article class="section-card stat-card">
-                        <h3>{{ $item['value'] }}</h3>
-                        <p>{{ $item['label'] }}</p>
-                    </article>
-                @endforeach
-            </div>
-        </div>        
-    </div>
-</section>
-
-<section class="section-wrap">
-    <div class="container-grid">
-        <article class="section-card budget-card">
-            <h2>Transparansi APB Desa</h2>
-            <div class="budget-row">
-                <span>Pendapatan</span>
-                <strong>Rp {{ number_format($village?->apb_income ?? 0, 0, ',', '.') }}</strong>
-            </div>
-            <div class="budget-row">
-                <span>Belanja</span>
-                <strong>Rp {{ number_format($village?->apb_expense ?? 0, 0, ',', '.') }}</strong>
-            </div>
-            <div class="budget-row">
-                <span>Pembiayaan</span>
-                <strong>Rp {{ number_format($village?->apb_financing ?? 0, 0, ',', '.') }}</strong>
-            </div>
-            <a href="{{ route('transparansi') }}" class="text-link">Buka laporan lengkap</a>
-        </article>
-    </div>
-</section>
-
-<section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head">
-            <h2>Berita Terbaru</h2>
-            <a href="{{ route('berita') }}">Arsip Berita</a>
         </div>
-        <div class="news-modern-grid">
+    </div>
+@endif
+@if ($moduleStates['announcements'] ?? false)
+    <section class="section-wrap">
+        <div class="container-grid">
+            <div class="section-head">
+                <h2>Pengumuman Terbaru</h2>
+                <a href="{{ route('pengumuman') }}">Lihat Semua</a>
+            </div>
+            <div class="announcement-grid">
+                @forelse ($announcements as $item)
+                    <article class="section-card announcement-card">
+                        <span class="announcement-card__type" style="background: {{ $item->typeColor() }}">
+                            <i class="{{ $item->typeIcon() }}" aria-hidden="true"></i> {{ $item->typeLabel() }}
+                        </span>
+                        <h3>{{ $item->title }}</h3>
+                        <p>{{ \Illuminate\Support\Str::limit(strip_tags($item->content), 135) }}</p>
+                        <small>{{ $item->published_at?->translatedFormat('d M Y') ?? $item->created_at?->translatedFormat('d M Y') }}</small>
+                    </article>
+                @empty
+                    <article class="section-card announcement-card">
+                        <h3>Belum ada pengumuman</h3>
+                        <p>Pengumuman dari admin desa akan tampil otomatis di sini.</p>
+                    </article>
+                @endforelse
+            </div>
+        </div>
+    </section>
+@endif
+
+@if ($moduleStates['news'] ?? false)
+    <section class="section-wrap">
+        <div class="container-grid">
+            <div class="section-head">
+                <h2>Berita Terbaru</h2>
+                <a href="{{ route('berita') }}">Arsip Berita</a>
+            </div>
+            <div class="news-modern-grid">
             @forelse ($news as $item)
                 <article class="section-card news-modern-card">
                     <a href="{{ route('berita.show', $item->slug) }}" class="news-modern-card__image-link" aria-label="{{ $item->title }}">
@@ -251,17 +147,44 @@
                     <p>Tambahkan berita dari panel admin untuk mengisi bagian ini secara otomatis.</p>
                 </article>
             @endforelse
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+@endif
 
-<section class="section-wrap section-wrap--last">
-    <div class="container-grid">
-        <div class="section-head">
-            <h2>Agenda Desa</h2>
-            <a href="{{ route('agenda') }}">Lihat Agenda</a>
+@if (($instagramPosts ?? collect())->isNotEmpty())
+    <section class="section-wrap">
+        <div class="container-grid">
+            <div class="section-head">
+                <h2>Instagram Desa</h2>
+                @if (!empty($village?->instagram_username))
+                    <a href="https://instagram.com/{{ ltrim($village->instagram_username, '@') }}" target="_blank" rel="noopener noreferrer">
+                        @{{ ltrim($village->instagram_username, '@') }}
+                    </a>
+                @endif
+            </div>
+            <div class="gallery-grid">
+                @foreach ($instagramPosts as $post)
+                    @php
+                        $preview = $post->thumbnail_url ?: $post->media_url;
+                    @endphp
+                    <a href="{{ $post->permalink ?: '#' }}" class="section-card gallery-item" target="_blank" rel="noopener noreferrer" @if($preview) style="background-image: linear-gradient(165deg, rgba(9, 49, 104, 0.24), rgba(11, 77, 163, 0.36)), url('{{ $preview }}'); background-size: cover; background-position: center;" @endif>
+                        <span>{{ \Illuminate\Support\Str::limit($post->caption ?: 'Lihat postingan', 60) }}</span>
+                    </a>
+                @endforeach
+            </div>
         </div>
-        <div class="agenda-list agenda-list--grid">
+    </section>
+@endif
+
+@if ($moduleStates['agendas'] ?? false)
+    <section class="section-wrap section-wrap--last">
+        <div class="container-grid">
+            <div class="section-head">
+                <h2>Agenda Desa</h2>
+                <a href="{{ route('agenda') }}">Lihat Agenda</a>
+            </div>
+            <div class="agenda-list agenda-list--grid">
             @forelse ($agendas as $agenda)
                 @php
                     $now = now();
@@ -301,17 +224,19 @@
                     </div>
                 </article>
             @endforelse
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+@endif
 
-<section class="section-wrap section-wrap--last">
-    <div class="container-grid">
-        <div class="section-head">
-            <h2>Galeri Desa</h2>
-            <a href="{{ route('galeri') }}">Lihat Galeri</a>
-        </div>
-        <div class="gallery-grid">
+@if ($moduleStates['galleries'] ?? false)
+    <section class="section-wrap section-wrap--last">
+        <div class="container-grid">
+            <div class="section-head">
+                <h2>Galeri Desa</h2>
+                <a href="{{ route('galeri') }}">Lihat Galeri</a>
+            </div>
+            <div class="gallery-grid">
             @forelse ($galleries as $gallery)
                 <div class="section-card gallery-item" @if($gallery->image_url) style="background-image: linear-gradient(165deg, rgba(9, 49, 104, 0.28), rgba(11, 77, 163, 0.42)), url('{{ $gallery->image_url }}'); background-size: cover; background-position: center;" @endif>
                     <span>{{ $gallery->title }}</span>
@@ -319,9 +244,10 @@
             @empty
                 <div class="section-card gallery-item"><span>Belum ada galeri</span></div>
             @endforelse
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+@endif
 
 <script>
     (function () {
@@ -355,6 +281,43 @@
 
         render(0);
         start();
+    })();
+</script>
+<script>
+    (function () {
+        const modal = document.querySelector('[data-head-message-modal]');
+        if (!modal) return;
+
+        const storageKey = 'headMessageModalClosedInTab';
+        const alreadyClosed = window.sessionStorage.getItem(storageKey) === '1';
+        if (alreadyClosed) return;
+
+        const closeButtons = Array.from(modal.querySelectorAll('[data-head-message-close]'));
+
+        const openModal = () => {
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('is-modal-open');
+        };
+
+        const closeModal = () => {
+            modal.hidden = true;
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('is-modal-open');
+            window.sessionStorage.setItem(storageKey, '1');
+        };
+
+        closeButtons.forEach((button) => {
+            button.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modal.hidden) {
+                closeModal();
+            }
+        });
+
+        openModal();
     })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -406,5 +369,3 @@
     })();
 </script>
 @endsection
-
-

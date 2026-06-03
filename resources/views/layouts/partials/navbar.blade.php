@@ -1,4 +1,15 @@
 @php
+    $moduleManager = \App\Support\ModuleManager::class;
+    $servicesModuleEnabled = $moduleManager::isEnabled('services');
+    $complaintsModuleEnabled = $moduleManager::isEnabled('complaints');
+    $profileModuleEnabled = $moduleManager::isEnabled('profile');
+    $newsModuleEnabled = $moduleManager::isEnabled('news');
+    $agendaModuleEnabled = $moduleManager::isEnabled('agendas');
+    $announcementsModuleEnabled = $moduleManager::isEnabled('announcements');
+    $galleriesModuleEnabled = $moduleManager::isEnabled('galleries');
+    $infographicsModuleEnabled = $moduleManager::isEnabled('infographics');
+    $transparencyModuleEnabled = $moduleManager::isEnabled('transparency');
+    $regulationsModuleEnabled = $moduleManager::isEnabled('regulations');
     $navVillage = app()->bound('currentVillage') ? app('currentVillage') : null;
     $navLogo = $navVillage?->logo_url ?? asset('icons/icon_desa.png');
 @endphp
@@ -18,24 +29,56 @@
         <div id="topbar-nav" class="topbar__nav">
             <ul class="menu">
                 <li><a href="{{ route('home') }}">Beranda</a></li>
-                <li class="menu__item menu__item--dropdown">
-                    <a href="{{ route('profil.gambaran') }}" class="profile-dropdown-trigger">Profil Desa</a>
-                    <div class="menu__dropdown">
-                        <a href="{{ route('profil.gambaran') }}">Gambaran Umum Desa</a>
-                        <a href="{{ route('profil.sejarah') }}">Sejarah Desa</a>
-                        <a href="{{ route('profil.visimisi') }}">Visi dan Misi</a>
-                        <a href="{{ route('profil.organisasi') }}">Susunan Organisasi</a>
-                    </div>
-                </li>
-                <li><a href="{{ route('berita') }}">Berita</a></li>
-                <li><a href="{{ route('agenda') }}">Agenda</a></li>
-                <li><a href="{{ route('infografis') }}">Infografis</a></li>
-                <li><a href="{{ route('services') }}">Layanan</a></li>
-                {{-- <li><a href="{{ route('services.status') }}">Cek Status</a></li> --}}
-                <li><a href="{{ route('transparansi') }}">Transparansi</a></li>
-                {{-- <li><a href="{{ route('galeri') }}">Galeri</a></li> --}}
-                {{-- <li><a href="{{ route('pengumuman') }}">Pengumuman</a></li> --}}
-                {{-- <li><a href="{{ route('kontak') }}">Kontak</a></li> --}}
+                @if ($profileModuleEnabled)
+                    <li class="menu__item menu__item--dropdown">
+                        <a href="{{ route('profil.gambaran') }}" class="profile-dropdown-trigger">Profil Desa</a>
+                        <div class="menu__dropdown">
+                            <a href="{{ route('profil.gambaran') }}">Gambaran Umum Desa</a>
+                            <a href="{{ route('profil.sejarah') }}">Sejarah Desa</a>
+                            <a href="{{ route('profil.visimisi') }}">Visi dan Misi</a>
+                            <a href="{{ route('profil.organisasi') }}">Susunan Organisasi</a>
+                        </div>
+                    </li>
+                @endif
+                @if ($infographicsModuleEnabled || $transparencyModuleEnabled)
+                    <li class="menu__item menu__item--dropdown">
+                        <a href="#" class="profile-dropdown-trigger">Data Desa</a>
+                        <div class="menu__dropdown">
+                            @if ($infographicsModuleEnabled)
+                                <a href="{{ route('infografis') }}">Infografis</a>
+                            @endif
+                            @if ($transparencyModuleEnabled)
+                                <a href="{{ route('transparansi') }}">Transparansi</a>
+                            @endif
+                        </div>
+                    </li>
+                @endif
+                @if ($newsModuleEnabled || $agendaModuleEnabled || $announcementsModuleEnabled || $galleriesModuleEnabled)
+                    <li class="menu__item menu__item--dropdown">
+                        <a href="#" class="profile-dropdown-trigger">Informasi</a>
+                        <div class="menu__dropdown">
+                            @if ($newsModuleEnabled)
+                                <a href="{{ route('berita') }}">Berita</a>
+                            @endif
+                            @if ($agendaModuleEnabled)
+                                <a href="{{ route('agenda') }}">Agenda</a>
+                            @endif
+                            @if ($announcementsModuleEnabled)
+                                <a href="{{ route('pengumuman') }}">Pengumuman</a>
+                            @endif
+                            @if ($galleriesModuleEnabled)
+                                <a href="{{ route('galeri') }}">Galeri</a>
+                            @endif
+                        </div>
+                    </li>
+                @endif
+                <li><a href="{{ route('statistik') }}">Statistik</a></li>
+                @if ($regulationsModuleEnabled)
+                    <li><a href="{{ route('regulations.index') }}">Peraturan Desa</a></li>
+                @endif
+                @if ($complaintsModuleEnabled)
+                    <li><a href="{{ route('complaints.index') }}">Pengaduan</a></li>
+                @endif
             </ul>
         </div>
     </div>
@@ -55,18 +98,25 @@
             nav.classList.toggle('is-mobile-open', isOpen);
         });
 
-        const dropdownItem = nav.querySelector('.menu__item--dropdown');
-        if (!dropdownItem) return;
+        const dropdownItems = Array.from(nav.querySelectorAll('.menu__item--dropdown'));
+        if (dropdownItems.length === 0) return;
 
-        const trigger = dropdownItem.querySelector('.profile-dropdown-trigger');
-        const menu = dropdownItem.querySelector('.menu__dropdown');
-        if (!trigger || !menu) return;
+        dropdownItems.forEach((dropdownItem) => {
+            const trigger = dropdownItem.querySelector('.profile-dropdown-trigger');
+            const menu = dropdownItem.querySelector('.menu__dropdown');
+            if (!trigger || !menu) return;
 
-        trigger.addEventListener('click', function (event) {
-            if (window.matchMedia('(max-width: 1024px)').matches) {
-                event.preventDefault();
-            }
-            dropdownItem.classList.toggle('is-open');
+            trigger.addEventListener('click', function (event) {
+                if (window.matchMedia('(max-width: 1024px)').matches) {
+                    event.preventDefault();
+                }
+
+                const willOpen = !dropdownItem.classList.contains('is-open');
+                dropdownItems.forEach((item) => item.classList.remove('is-open'));
+                if (willOpen) {
+                    dropdownItem.classList.add('is-open');
+                }
+            });
         });
 
         document.addEventListener('click', function (event) {
@@ -75,9 +125,11 @@
                 nav.classList.remove('is-mobile-open');
                 navToggle.setAttribute('aria-expanded', 'false');
             }
-            if (!dropdownItem.contains(event.target)) {
-                dropdownItem.classList.remove('is-open');
-            }
+            dropdownItems.forEach((item) => {
+                if (!item.contains(event.target)) {
+                    item.classList.remove('is-open');
+                }
+            });
         });
 
         document.addEventListener('keydown', function (event) {
@@ -85,7 +137,7 @@
                 navPanel.classList.remove('is-open');
                 nav.classList.remove('is-mobile-open');
                 navToggle.setAttribute('aria-expanded', 'false');
-                dropdownItem.classList.remove('is-open');
+                dropdownItems.forEach((item) => item.classList.remove('is-open'));
             }
         });
     })();

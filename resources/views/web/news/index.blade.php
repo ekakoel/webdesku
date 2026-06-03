@@ -3,10 +3,15 @@
 @section('content')
 <section class="section-wrap">
     <div class="container-grid">
-        <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; margin: 0;">Berita Desa</h1>
-        @if ($village)
-            <p style="margin-top: .45rem; color: #4b5563;">Publikasi terbaru dari {{ $village->name }}.</p>
-        @endif
+        <article class="page-hero section-card">
+            <div>
+                <small>Berita Desa</small>
+                <h1>Berita Desa</h1>
+                @if ($village)
+                    <p>Publikasi terbaru dari {{ $village->name }}.</p>
+                @endif
+            </div>
+        </article>
     </div>
 </section>
 

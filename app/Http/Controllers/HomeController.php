@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agenda;
 use App\Models\Announcement;
+use App\Models\Complaint;
 use App\Models\Gallery;
 use App\Models\News;
 use App\Models\Slider;
@@ -13,12 +14,17 @@ use App\Models\VillageOfficial;
 use App\Models\ServiceRequest;
 use App\Models\VillageAsset;
 use App\Models\VillageApbdesItem;
+use App\Models\VillageApbdesDocument;
 use App\Models\VillageInfographicItem;
+use App\Models\VillageInstagramPost;
 use App\Models\VillagePopulation;
 use App\Models\VillagePopulationStat;
+use App\Models\VillageLandUseArea;
 use App\Models\VillageProfilePage;
 use App\Models\VillageService;
 use App\Models\VillageTransparencyItem;
+use App\Models\VillageTransparencyDocument;
+use App\Support\ModuleManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +33,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -36,31 +43,43 @@ class HomeController extends Controller
     public function index(): View
     {
         $village = $this->currentVillage();
+        $moduleStates = $this->frontendModuleStates();
 
-        $news = Schema::hasTable('news')
+        $news = $moduleStates['news'] && Schema::hasTable('news')
             ? $this->publishedNewsQuery($village)->take(3)->get()
             : collect();
         $sliders = Schema::hasTable('sliders')
             ? $this->publishedSlidersQuery($village)->take(8)->get()
             : collect();
-        $services = Schema::hasTable('services')
+        $services = $moduleStates['services'] && Schema::hasTable('services')
             ? $this->publishedServicesQuery($village)->take(4)->get()
             : collect();
-        $headMessage = Schema::hasTable('village_head_messages')
+        $headMessage = $moduleStates['profile'] && Schema::hasTable('village_head_messages')
             ? $this->publishedHeadMessagesQuery($village)->first()
             : null;
-        $officials = Schema::hasTable('village_officials')
+        $officials = $moduleStates['profile'] && Schema::hasTable('village_officials')
             ? $this->publishedOfficialsQuery($village)->take(4)->get()
             : collect();
-        $agendas = Schema::hasTable('agendas')
+        $agendas = $moduleStates['agendas'] && Schema::hasTable('agendas')
             ? $this->publishedAgendasQuery($village)->take(4)->get()
             : collect();
-        $announcements = Schema::hasTable('announcements')
+        $announcements = $moduleStates['announcements'] && Schema::hasTable('announcements')
             ? $this->publishedAnnouncementsQuery($village)->take(3)->get()
             : collect();
-        $galleries = Schema::hasTable('galleries')
+        $galleries = $moduleStates['galleries'] && Schema::hasTable('galleries')
             ? $this->publishedGalleriesQuery($village)->take(4)->get()
             : collect();
+        $instagramPosts = $village
+            && $village->instagram_enabled
+            && trim((string) $village->instagram_access_token) !== ''
+            && Schema::hasTable('village_instagram_posts')
+                ? VillageInstagramPost::query()
+                    ->where('village_id', $village->id)
+                    ->orderByDesc('posted_at')
+                    ->orderByDesc('id')
+                    ->take(6)
+                    ->get()
+                : collect();
 
         $population = $this->normalizedVillagePopulation($village);
         $populationTotal = $population['total'];
@@ -73,7 +92,7 @@ class HomeController extends Controller
             ['label' => 'Total Penduduk', 'value' => $populationTotal > 0 ? number_format($populationTotal, 0, ',', '.').' Jiwa' : '-'],
             ['label' => 'Penduduk Laki-laki', 'value' => $populationMale > 0 ? number_format($populationMale, 0, ',', '.').' Jiwa' : '-'],
             ['label' => 'Penduduk Perempuan', 'value' => $populationFemale > 0 ? number_format($populationFemale, 0, ',', '.').' Jiwa' : '-'],
-            ['label' => 'Kepala Keluarga', 'value' => $village?->households ? number_format($village->households, 0, ',', '.').' KK' : '-'],
+            ['label' => 'Kepala Keluarga', 'value' => ($population['households'] ?? 0) > 0 ? number_format((int) $population['households'], 0, ',', '.').' KK' : '-'],
             ['label' => 'Luas Wilayah', 'value' => $village?->area_km2 ? number_format($village->area_km2, 2, ',', '.').' Km2' : '-'],
             ['label' => 'RT / RW', 'value' => $village ? (($village->rt_count ?? 0).' / '.($village->rw_count ?? 0)) : '-'],
         ];
@@ -94,8 +113,10 @@ class HomeController extends Controller
             'agendas',
             'announcements',
             'galleries',
+            'instagramPosts',
             'stats',
             'populationChart',
+            'moduleStates',
         ));
     }
 
@@ -410,27 +431,216 @@ class HomeController extends Controller
         ]);
     }
 
+    public function complaints(): View
+    {
+        $village = $this->currentVillage();
+
+        return view('web.complaints.index', [
+            'village' => $village,
+            'categories' => $this->complaintCategories(),
+        ]);
+    }
+
+    public function complaintStore(Request $request): RedirectResponse
+    {
+        $village = $this->currentVillage();
+        if (!$village || !Schema::hasTable('complaints')) {
+            return back()->withErrors(['complaint' => 'Modul pengaduan belum aktif.'])->withInput();
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'whatsapp' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]+$/'],
+            'category' => ['required', 'string', 'max:80'],
+            'title' => ['required', 'string', 'max:190'],
+            'description' => ['required', 'string', 'max:7000'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:4096'],
+        ], [
+            'whatsapp.regex' => 'Format nomor WhatsApp tidak valid.',
+            'attachment.mimes' => 'Lampiran harus berupa PDF/JPG/PNG/WEBP.',
+        ]);
+
+        $ticketCode = $this->generateComplaintTicketCode();
+        $publicToken = $this->generateComplaintPublicToken();
+        $attachmentPath = $request->hasFile('attachment')
+            ? $request->file('attachment')->store('complaints', 'public')
+            : null;
+
+        Complaint::query()->create([
+            'village_id' => $village->id,
+            'ticket_code' => $ticketCode,
+            'public_token' => $publicToken,
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'whatsapp' => $validated['whatsapp'] ?? null,
+            'category' => $validated['category'],
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'location' => $validated['location'] ?? null,
+            'attachment_path' => $attachmentPath,
+            'status' => 'baru',
+            'submitted_at' => now(),
+        ]);
+
+        return redirect()->route('complaints.index')
+            ->with('complaint_ticket', $ticketCode)
+            ->with('complaint_lookup_url', route('complaints.status', ['ticket' => $ticketCode]))
+            ->with('status', "Pengaduan berhasil dikirim. Kode tiket Anda: {$ticketCode}");
+    }
+
+    public function complaintStatus(Request $request): View
+    {
+        $village = $this->currentVillage();
+        $ticket = Str::upper(trim((string) $request->query('ticket', '')));
+        $complaint = null;
+
+        if ($ticket !== '' && Schema::hasTable('complaints')) {
+            $query = Complaint::query()
+                ->where('ticket_code', $ticket)
+                ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+
+            if (Schema::hasTable('complaint_responses')) {
+                $query->with(['responses' => fn ($responseQuery) => $responseQuery->latest()]);
+            }
+
+            $complaint = $query->first();
+        }
+
+        return view('web.complaints.status', [
+            'ticket' => $ticket,
+            'complaint' => $complaint,
+        ]);
+    }
+
+    public function statistik(): View
+    {
+        $village = $this->currentVillage();
+        $moduleStates = $this->frontendModuleStates();
+        $year = (int) request()->query('year', now()->year);
+        $year = $year >= 2000 && $year <= ((int) now()->year + 1) ? $year : (int) now()->year;
+
+        $population = $this->normalizedVillagePopulation($village);
+        $newsTotal = $moduleStates['news'] && Schema::hasTable('news') ? $this->publishedNewsQuery($village)->count() : 0;
+        $agendaTotal = $moduleStates['agendas'] && Schema::hasTable('agendas') ? $this->publishedAgendasQuery($village)->count() : 0;
+        $announcementTotal = $moduleStates['announcements'] && Schema::hasTable('announcements') ? $this->publishedAnnouncementsQuery($village)->count() : 0;
+        $serviceTotal = $moduleStates['services'] && Schema::hasTable('services') ? $this->publishedServicesQuery($village)->count() : 0;
+        $galleryTotal = $moduleStates['galleries'] && Schema::hasTable('galleries') ? $this->publishedGalleriesQuery($village)->count() : 0;
+        $assetTotal = $moduleStates['infographics'] && Schema::hasTable('village_assets') ? $this->publishedAssetsQuery($village)->count() : 0;
+        $complaintTotal = $moduleStates['complaints'] && Schema::hasTable('complaints')
+            ? Complaint::query()->when($village, fn (Builder $query) => $query->where('village_id', $village->id))->count()
+            : 0;
+
+        $kpis = collect([
+            ['label' => 'Total Penduduk', 'value' => number_format((int) $population['total'], 0, ',', '.').' Jiwa'],
+            ...($moduleStates['complaints'] ? [['label' => 'Total Aduan', 'value' => number_format($complaintTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['news'] ? [['label' => 'Total Berita', 'value' => number_format($newsTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['agendas'] ? [['label' => 'Total Agenda', 'value' => number_format($agendaTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['announcements'] ? [['label' => 'Total Pengumuman', 'value' => number_format($announcementTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['services'] ? [['label' => 'Layanan Aktif', 'value' => number_format($serviceTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['infographics'] ? [['label' => 'Total Aset Desa', 'value' => number_format($assetTotal, 0, ',', '.')]] : []),
+            ...($moduleStates['galleries'] ? [['label' => 'Konten Galeri', 'value' => number_format($galleryTotal, 0, ',', '.')]] : []),
+        ])->values()->all();
+
+        $complaintByStatus = collect();
+        $complaintByCategory = collect();
+        if ($moduleStates['complaints'] && Schema::hasTable('complaints')) {
+            $complaintByStatus = Complaint::query()
+                ->selectRaw('status, COUNT(*) as total')
+                ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            $complaintByCategory = Complaint::query()
+                ->selectRaw('category, COUNT(*) as total')
+                ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
+                ->groupBy('category')
+                ->orderByDesc('total')
+                ->limit(8)
+                ->get();
+        }
+
+        $monthly = collect(range(1, 12))->map(function (int $month) use ($village, $year, $moduleStates) {
+            $news = $moduleStates['news'] && Schema::hasTable('news')
+                ? $this->publishedNewsQuery($village)->whereYear('published_at', $year)->whereMonth('published_at', $month)->count()
+                : 0;
+            $agendas = $moduleStates['agendas'] && Schema::hasTable('agendas')
+                ? $this->publishedAgendasQuery($village)->whereYear('start_at', $year)->whereMonth('start_at', $month)->count()
+                : 0;
+            $complaints = $moduleStates['complaints'] && Schema::hasTable('complaints')
+                ? Complaint::query()
+                    ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
+                    ->whereYear('submitted_at', $year)
+                    ->whereMonth('submitted_at', $month)
+                    ->count()
+                : 0;
+
+            return [
+                'label' => Carbon::create()->month($month)->translatedFormat('M'),
+                'news' => $news,
+                'agendas' => $agendas,
+                'complaints' => $complaints,
+            ];
+        });
+
+        $assetTypeStats = collect();
+        if ($moduleStates['infographics'] && Schema::hasTable('village_assets')) {
+            $assetCountsByType = $this->publishedAssetsQuery($village)
+                ->selectRaw('type, COUNT(*) as total')
+                ->groupBy('type')
+                ->pluck('total', 'type');
+
+            $assetTypeStats = collect(VillageAsset::typeOptions())
+                ->map(function (array $meta, string $type) use ($assetCountsByType) {
+                    return [
+                        'type' => $type,
+                        'label' => $meta['label'],
+                        'color' => $meta['color'],
+                        'total' => (int) ($assetCountsByType[$type] ?? 0),
+                    ];
+                })
+                ->filter(fn (array $row) => $row['total'] > 0)
+                ->values();
+        }
+
+        return view('web.statistics.index', [
+            'village' => $village,
+            'year' => $year,
+            'yearOptions' => range((int) now()->year - 4, (int) now()->year + 1),
+            'kpis' => $kpis,
+            'complaintByStatus' => $complaintByStatus,
+            'complaintByCategory' => $complaintByCategory,
+            'monthly' => $monthly,
+            'population' => $population,
+            'moduleStates' => $moduleStates,
+            'assetTypeStats' => $assetTypeStats,
+        ]);
+    }
+
     public function transparansi(): View
     {
         $village = $this->currentVillage();
+        $tab = (string) request()->query('tab', 'apbdes');
+        if (!in_array($tab, ['apbdes', 'dokumen'], true)) {
+            $tab = 'apbdes';
+        }
         $year = (int) request()->query('year', 0);
-
-        $apbdesYears = Schema::hasTable('village_apbdes_items')
-            ? $this->publishedApbdesQuery($village)->select('fiscal_year')->distinct()->orderByDesc('fiscal_year')->pluck('fiscal_year')
-            : collect();
-        $selectedYear = $year > 0 ? $year : (int) ($apbdesYears->first() ?? 0);
-        $apbdesItems = ($selectedYear > 0 && Schema::hasTable('village_apbdes_items'))
-            ? $this->publishedApbdesQuery($village)
-                ->where('fiscal_year', $selectedYear)
-                ->orderBy('type')
+        $apbdesData = $this->resolveApbdesDataset($village, $year);
+        $apbdesYears = $apbdesData['years'];
+        $selectedYear = $apbdesData['selected_year'];
+        $apbdesItems = $apbdesData['items'];
+        $apbdesSummary = $apbdesData['summary'];
+        $apbdesDocuments = Schema::hasTable('village_apbdes_documents')
+            ? $this->publishedApbdesDocumentQuery($village)
+                ->when($selectedYear > 0, fn (Builder $query) => $query->where(function (Builder $subQuery) use ($selectedYear) {
+                    $subQuery->where('fiscal_year', $selectedYear)->orWhereNull('fiscal_year');
+                }))
+                ->orderByDesc('fiscal_year')
                 ->orderBy('sort_order')
                 ->get()
             : collect();
-        $apbdesSummary = [
-            'pendapatan' => (int) $apbdesItems->where('type', 'pendapatan')->sum('amount'),
-            'belanja' => (int) $apbdesItems->where('type', 'belanja')->sum('amount'),
-            'pembiayaan' => (int) $apbdesItems->where('type', 'pembiayaan')->sum('amount'),
-        ];
+        $apbdesDocumentTotal = $apbdesDocuments->count();
 
         $transparencyItems = Schema::hasTable('village_transparency_items')
             ? $this->publishedTransparencyQuery($village)
@@ -442,15 +652,31 @@ class HomeController extends Controller
                 ->orderBy('sort_order')
                 ->get()
             : collect();
-        $transparencyCategories = $transparencyItems->groupBy('category');
+        $transparencyDocuments = Schema::hasTable('village_transparency_documents')
+            ? $this->publishedTransparencyDocumentQuery($village)
+                ->when($selectedYear > 0, fn (Builder $query) => $query->where(function (Builder $subQuery) use ($selectedYear) {
+                    $subQuery->where('fiscal_year', $selectedYear)->orWhereNull('fiscal_year');
+                }))
+                ->orderByDesc('fiscal_year')
+                ->orderBy('category')
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+        $documentReportTotal = $transparencyDocuments->count();
+        $transparencyCategories = $transparencyDocuments->groupBy('category');
 
         return view('web.transparency.index', [
             'village' => $village,
+            'tab' => $tab,
             'apbdesYears' => $apbdesYears,
             'selectedYear' => $selectedYear > 0 ? $selectedYear : null,
             'apbdesItems' => $apbdesItems,
             'apbdesSummary' => $apbdesSummary,
+            'documentReportTotal' => $documentReportTotal,
+            'apbdesDocuments' => $apbdesDocuments,
+            'apbdesDocumentTotal' => $apbdesDocumentTotal,
             'transparencyItems' => $transparencyItems,
+            'transparencyDocuments' => $transparencyDocuments,
             'transparencyCategories' => $transparencyCategories,
         ]);
     }
@@ -459,103 +685,80 @@ class HomeController extends Controller
     {
         $village = $this->currentVillage();
         $tab = (string) request()->query('tab', 'aset');
+        if (!in_array($tab, ['aset', 'penduduk', 'lainnya'], true)) {
+            $tab = 'aset';
+        }
         $type = (string) request()->query('type', 'all');
         $keyword = trim((string) request()->query('q', ''));
         $year = (int) request()->query('year', 0);
         $infographicGovernanceMeta = $this->buildInfographicGovernanceMeta($village);
 
-        if (!Schema::hasTable('village_assets')) {
-            return view('web.infographics.index', [
-                'village' => $village,
-                'assets' => $this->emptyPaginator(),
-                'assetMapItems' => collect(),
-                'populations' => collect(),
-                'populationChartItems' => collect(),
-                'populationStatsByCategory' => collect(),
-                'apbdesItems' => collect(),
-                'apbdesSummary' => ['pendapatan' => 0, 'belanja' => 0, 'pembiayaan' => 0],
-                'apbdesYears' => collect(),
-                'selectedYear' => null,
-                'otherInfographics' => collect(),
-                'tab' => $tab,
-                'type' => $type,
-                'keyword' => $keyword,
-                'year' => $year > 0 ? $year : null,
-                'typeOptions' => VillageAsset::typeOptions(),
-                'infographicGovernanceMeta' => $infographicGovernanceMeta,
-            ]);
+        $assets = $this->emptyPaginator();
+        $mapItems = collect();
+        if (Schema::hasTable('village_assets')) {
+            $query = $this->publishedAssetsQuery($village)
+                ->when($type !== 'all', fn (Builder $builder) => $builder->where('type', $type))
+                ->when($keyword !== '', function (Builder $builder) use ($keyword) {
+                    $builder->where(function (Builder $subQuery) use ($keyword) {
+                        $subQuery->where('name', 'like', "%{$keyword}%")
+                            ->orWhere('subcategory', 'like', "%{$keyword}%")
+                            ->orWhere('address', 'like', "%{$keyword}%");
+                    });
+                });
+
+            $mapItems = (clone $query)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->take(400)
+                ->get()
+                ->map(function (VillageAsset $asset) {
+                    return [
+                        'id' => $asset->id,
+                        'name' => $asset->name,
+                        'type' => $asset->type,
+                        'type_label' => $asset->typeLabel(),
+                        'color' => $asset->typeColor(),
+                        'subcategory' => $asset->subcategory,
+                        'description' => Str::limit(strip_tags((string) $asset->description), 180),
+                        'address' => $asset->address,
+                        'latitude' => $asset->latitude,
+                        'longitude' => $asset->longitude,
+                        'map_url' => $asset->map_url,
+                        'icon_url' => $asset->icon_url,
+                        'contact_person' => $asset->contact_person,
+                        'contact_phone' => $asset->contact_phone,
+                    ];
+                })
+                ->values();
+
+            $assets = $query->paginate(6)->withQueryString();
         }
 
-        $query = $this->publishedAssetsQuery($village)
-            ->when($type !== 'all', fn (Builder $builder) => $builder->where('type', $type))
-            ->when($keyword !== '', function (Builder $builder) use ($keyword) {
-                $builder->where(function (Builder $subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                        ->orWhere('subcategory', 'like', "%{$keyword}%")
-                        ->orWhere('address', 'like', "%{$keyword}%");
-                });
-            });
-
-        $mapItems = (clone $query)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->take(400)
-            ->get()
-            ->map(function (VillageAsset $asset) {
-                return [
-                    'id' => $asset->id,
-                    'name' => $asset->name,
-                    'type' => $asset->type,
-                    'type_label' => $asset->typeLabel(),
-                    'color' => $asset->typeColor(),
-                    'subcategory' => $asset->subcategory,
-                    'description' => Str::limit(strip_tags((string) $asset->description), 180),
-                    'address' => $asset->address,
-                    'latitude' => $asset->latitude,
-                    'longitude' => $asset->longitude,
-                    'map_url' => $asset->map_url,
-                    'icon_url' => $asset->icon_url,
-                    'contact_person' => $asset->contact_person,
-                    'contact_phone' => $asset->contact_phone,
-                ];
-            })
-            ->values();
-
-        $assets = $query->paginate(6)->withQueryString();
-
         $populations = Schema::hasTable('village_populations')
-            ? $this->publishedPopulationQuery($village)->orderByDesc('year')->get()
+            ? $this->publishedPopulationQuery($village)->orderByDesc('year')->orderBy('sort_order')->get()
             : collect();
-        $populationChartItems = $populations->map(fn (VillagePopulation $item) => [
+        $populationYears = $populations->pluck('year')->unique()->sortDesc()->values();
+        $selectedPopulationYear = $tab === 'penduduk' && $year > 0 ? $year : null;
+        $populationVisibleRows = $selectedPopulationYear
+            ? $populations->where('year', $selectedPopulationYear)->values()
+            : $populations->values();
+        $latestPopulation = $populationVisibleRows->first() ?: $populations->first();
+
+        $populationChartItems = $populationVisibleRows
+            ->sortBy('year')
+            ->values()
+            ->map(fn (VillagePopulation $item) => [
             'year' => (string) $item->year,
             'male' => (int) $item->male,
             'female' => (int) $item->female,
         ])->values();
-        $populationStatsByCategory = Schema::hasTable('village_population_stats')
-            ? $this->publishedPopulationStatsQuery($village)
-                ->when(
-                    $populations->isNotEmpty(),
-                    fn (Builder $query) => $query->where('year', (int) ($populations->first()->year ?? now()->year))
-                )
-                ->orderBy('category')
-                ->orderBy('sort_order')
-                ->orderBy('label')
-                ->get()
-                ->groupBy('category')
-            : collect();
+        $populationStatsByCategory = $this->resolveLatestPopulationStatsByCategory($village, $selectedPopulationYear);
 
-        $apbdesYears = Schema::hasTable('village_apbdes_items')
-            ? $this->publishedApbdesQuery($village)->select('fiscal_year')->distinct()->orderByDesc('fiscal_year')->pluck('fiscal_year')
-            : collect();
-        $selectedYear = $year > 0 ? $year : (int) ($apbdesYears->first() ?? 0);
-        $apbdesItems = ($selectedYear > 0 && Schema::hasTable('village_apbdes_items'))
-            ? $this->publishedApbdesQuery($village)->where('fiscal_year', $selectedYear)->orderBy('type')->orderBy('sort_order')->get()
-            : collect();
-        $apbdesSummary = [
-            'pendapatan' => (int) $apbdesItems->where('type', 'pendapatan')->sum('amount'),
-            'belanja' => (int) $apbdesItems->where('type', 'belanja')->sum('amount'),
-            'pembiayaan' => (int) $apbdesItems->where('type', 'pembiayaan')->sum('amount'),
-        ];
+        $apbdesData = $this->resolveApbdesDataset($village, $year);
+        $apbdesYears = $apbdesData['years'];
+        $selectedYear = $apbdesData['selected_year'];
+        $apbdesItems = $apbdesData['items'];
+        $apbdesSummary = $apbdesData['summary'];
 
         $otherInfographics = Schema::hasTable('village_infographic_items')
             ? $this->publishedOtherInfographicQuery($village)->orderBy('sort_order')->get()
@@ -568,6 +771,10 @@ class HomeController extends Controller
             'populations' => $populations,
             'populationChartItems' => $populationChartItems,
             'populationStatsByCategory' => $populationStatsByCategory,
+            'populationYears' => $populationYears,
+            'selectedPopulationYear' => $selectedPopulationYear,
+            'latestPopulation' => $latestPopulation,
+            'populationVisibleRows' => $populationVisibleRows,
             'apbdesItems' => $apbdesItems,
             'apbdesSummary' => $apbdesSummary,
             'apbdesYears' => $apbdesYears,
@@ -620,6 +827,55 @@ class HomeController extends Controller
         ]);
     }
 
+    public function peraturan(): View
+    {
+        $village = $this->currentVillage();
+        $keyword = trim((string) request()->query('q', ''));
+
+        $regulations = Schema::hasTable('announcements')
+            ? $this->publishedRegulationsQuery($village)
+                ->when($keyword !== '', function (Builder $query) use ($keyword) {
+                    $query->where(function (Builder $subQuery) use ($keyword) {
+                        $subQuery->where('title', 'like', "%{$keyword}%")
+                            ->orWhere('content', 'like', "%{$keyword}%")
+                            ->orWhere('attachment_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->paginate(12)
+                ->withQueryString()
+            : $this->emptyPaginator();
+
+        return view('web.regulations.index', [
+            'regulations' => $regulations,
+            'village' => $village,
+            'keyword' => $keyword,
+        ]);
+    }
+
+    public function regulationDownload(Announcement $announcement)
+    {
+        if ($announcement->type !== Announcement::TYPE_PERATURAN) {
+            throw new ModelNotFoundException();
+        }
+
+        if (Schema::hasColumn('announcements', 'is_published') && !$announcement->is_published) {
+            throw new ModelNotFoundException();
+        }
+
+        $village = $this->currentVillage();
+        if ($village && $announcement->village_id !== $village->id) {
+            throw new ModelNotFoundException();
+        }
+
+        if (!$announcement->hasLocalAttachment() || !$announcement->attachment_path || !Storage::disk('public')->exists($announcement->attachment_path)) {
+            throw new ModelNotFoundException();
+        }
+
+        $downloadName = $announcement->attachment_name ?: basename($announcement->attachment_path);
+
+        return Storage::disk('public')->download($announcement->attachment_path, $downloadName);
+    }
+
     public function kontak(): View
     {
         $village = $this->currentVillage();
@@ -650,7 +906,7 @@ class HomeController extends Controller
 
         $stats = [
             ['label' => 'Penduduk', 'value' => $population['total'] > 0 ? number_format($population['total'], 0, ',', '.').' Jiwa' : '-'],
-            ['label' => 'Kepala Keluarga', 'value' => $village?->households ? number_format($village->households, 0, ',', '.').' KK' : '-'],
+            ['label' => 'Kepala Keluarga', 'value' => ($population['households'] ?? 0) > 0 ? number_format((int) $population['households'], 0, ',', '.').' KK' : '-'],
             ['label' => 'Luas Wilayah', 'value' => $village?->area_km2 ? number_format($village->area_km2, 2, ',', '.').' Km2' : '-'],
             ['label' => 'RT / RW', 'value' => $village ? (($village->rt_count ?? 0).' / '.($village->rw_count ?? 0)) : '-'],
         ];
@@ -691,6 +947,7 @@ class HomeController extends Controller
         $populationSeries = collect();
         $religionStats = collect();
         $populationStatsByCategory = collect();
+        $landUseRows = collect();
         if ($village && Schema::hasTable('village_populations')) {
             $populationSeries = $this->publishedPopulationQuery($village)
                 ->orderBy('year')
@@ -704,35 +961,34 @@ class HomeController extends Controller
                 ])
                 ->values();
         }
-        if ($village && Schema::hasTable('village_population_stats')) {
-            $statsRows = $this->publishedPopulationStatsQuery($village)
-                ->orderByDesc('year')
-                ->orderBy('category')
+        $populationStatsGrouped = $this->resolveLatestPopulationStatsByCategory($village);
+        if ($populationStatsGrouped->isNotEmpty()) {
+            $populationStatsByCategory = $populationStatsGrouped
+                ->map(function ($rows) {
+                    return collect($rows)->map(function (VillagePopulationStat $row) {
+                        return [
+                            'label' => (string) $row->label,
+                            'value' => (int) $row->value,
+                        ];
+                    })->values()->all();
+                });
+            $religionStats = collect($populationStatsByCategory->get(VillagePopulationStat::CATEGORY_AGAMA, []));
+        }
+        if ($village && Schema::hasTable('village_land_use_areas')) {
+            $latestLandUseYear = $this->publishedLandUseQuery($village)->max('fiscal_year');
+            $landUseRows = $this->publishedLandUseQuery($village)
+                ->when($latestLandUseYear, fn (Builder $query) => $query->where('fiscal_year', (int) $latestLandUseYear))
                 ->orderBy('sort_order')
                 ->orderBy('label')
-                ->get();
-
-            $activeYear = (int) ($statsRows->first()->year ?? 0);
-            $yearRows = $statsRows
-                ->when($activeYear > 0, fn ($rows) => $rows->where('year', $activeYear))
-                ->map(fn (VillagePopulationStat $row) => [
-                    'category' => (string) $row->category,
-                    'label' => (string) $row->label,
-                    'value' => (int) $row->value,
-                ])
+                ->get()
+                ->map(function (VillageLandUseArea $row) {
+                    $unit = trim((string) ($row->unit ?: 'Ha'));
+                    return [
+                        'label' => (string) $row->label,
+                        'value' => number_format((float) $row->area_value, 2, ',', '.').' '.$unit,
+                    ];
+                })
                 ->values();
-
-            $populationStatsByCategory = $yearRows
-                ->groupBy('category')
-                ->map(fn ($rows) => $rows->map(fn ($row) => [
-                    'label' => $row['label'],
-                    'value' => $row['value'],
-                ])->values()->all());
-
-            $religionStats = collect($populationStatsByCategory->get(VillagePopulationStat::CATEGORY_AGAMA, []));
-            if ($religionStats->isEmpty()) {
-                $religionStats = collect($populationStatsByCategory->get('agaman', []));
-            }
         }
 
         $data = [
@@ -747,10 +1003,10 @@ class HomeController extends Controller
                 'barat' => null,
                 'timur' => null,
             ],
-            'luas' => [],
+            'luas' => $landUseRows->all(),
             'orbitasi' => [],
             'penduduk' => [
-                'kk' => (int) ($village?->households ?? 0),
+                'kk' => (int) ($population['households'] ?? 0),
                 'male' => $population['male'],
                 'female' => $population['female'],
                 'total' => $population['total'],
@@ -765,7 +1021,7 @@ class HomeController extends Controller
         ];
 
         $merged = $this->mergeProfilePageData($data, $page);
-        $merged['penduduk']['kk'] = (int) ($village?->households ?? 0);
+        $merged['penduduk']['kk'] = (int) ($population['households'] ?? 0);
         $merged['penduduk']['male'] = $population['male'];
         $merged['penduduk']['female'] = $population['female'];
         $merged['penduduk']['total'] = $population['total'];
@@ -775,6 +1031,7 @@ class HomeController extends Controller
         if ($populationStatsByCategory->isNotEmpty()) {
             $merged['statistik_kategori_penduduk'] = $populationStatsByCategory->toArray();
         }
+        $merged['luas'] = $landUseRows->all();
 
         return $merged;
     }
@@ -857,9 +1114,22 @@ class HomeController extends Controller
 
     private function normalizedVillagePopulation(?Village $village): array
     {
-        $total = (int) ($village?->population ?? 0);
-        $male = (int) ($village?->population_male ?? 0);
-        $female = (int) ($village?->population_female ?? 0);
+        $latestPopulation = null;
+        if ($village && Schema::hasTable('village_populations')) {
+            $latestPopulation = $this->publishedPopulationQuery($village)
+                ->orderByDesc('year')
+                ->orderBy('sort_order')
+                ->first();
+        }
+
+        $male = (int) ($latestPopulation?->male ?? $village?->population_male ?? 0);
+        $female = (int) ($latestPopulation?->female ?? $village?->population_female ?? 0);
+        $households = (int) ($latestPopulation?->households ?? $village?->households ?? 0);
+        $total = $male + $female;
+
+        if ($total <= 0) {
+            $total = (int) ($village?->population ?? 0);
+        }
 
         if ($total > 0) {
             if ($male > 0 && $female === 0) {
@@ -878,6 +1148,7 @@ class HomeController extends Controller
             'total' => $total,
             'male' => $male,
             'female' => $female,
+            'households' => $households,
         ];
     }
 
@@ -937,6 +1208,12 @@ class HomeController extends Controller
             ->latest();
     }
 
+    private function publishedRegulationsQuery(?Village $village): Builder
+    {
+        return $this->publishedAnnouncementsQuery($village)
+            ->where('type', Announcement::TYPE_PERATURAN);
+    }
+
     private function publishedGalleriesQuery(?Village $village): Builder
     {
         return Gallery::query()
@@ -978,10 +1255,84 @@ class HomeController extends Controller
             ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
     }
 
+    private function resolveLatestPopulationStatsByCategory(?Village $village, ?int $year = null): \Illuminate\Support\Collection
+    {
+        if (!$village || !Schema::hasTable('village_population_stats')) {
+            return collect();
+        }
+
+        $activeYear = $year && $year > 0
+            ? $year
+            : (int) ($this->publishedPopulationStatsQuery($village)->max('year') ?? 0);
+        if ($activeYear <= 0) {
+            return collect();
+        }
+
+        return $this->publishedPopulationStatsQuery($village)
+            ->where('year', $activeYear)
+            ->orderBy('category')
+            ->orderBy('sort_order')
+            ->orderBy('label')
+            ->get()
+            ->groupBy('category');
+    }
+
+    private function publishedLandUseQuery(?Village $village): Builder
+    {
+        return VillageLandUseArea::query()
+            ->when(Schema::hasColumn('village_land_use_areas', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
+            ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+    }
+
     private function publishedApbdesQuery(?Village $village): Builder
     {
         return VillageApbdesItem::query()
             ->when(Schema::hasColumn('village_apbdes_items', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
+            ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+    }
+
+    private function resolveApbdesDataset(?Village $village, int $requestedYear = 0): array
+    {
+        if (!Schema::hasTable('village_apbdes_items')) {
+            return [
+                'years' => collect(),
+                'selected_year' => null,
+                'items' => collect(),
+                'summary' => ['pendapatan' => 0, 'belanja' => 0, 'pembiayaan' => 0],
+            ];
+        }
+
+        $years = $this->publishedApbdesQuery($village)
+            ->select('fiscal_year')
+            ->distinct()
+            ->orderByDesc('fiscal_year')
+            ->pluck('fiscal_year');
+
+        $selectedYear = $requestedYear > 0 ? $requestedYear : (int) ($years->first() ?? 0);
+        $items = $selectedYear > 0
+            ? $this->publishedApbdesQuery($village)
+                ->where('fiscal_year', $selectedYear)
+                ->orderBy('type')
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+
+        return [
+            'years' => $years,
+            'selected_year' => $selectedYear > 0 ? $selectedYear : null,
+            'items' => $items,
+            'summary' => [
+                'pendapatan' => (int) $items->where('type', 'pendapatan')->sum('amount'),
+                'belanja' => (int) $items->where('type', 'belanja')->sum('amount'),
+                'pembiayaan' => (int) $items->where('type', 'pembiayaan')->sum('amount'),
+            ],
+        ];
+    }
+
+    private function publishedApbdesDocumentQuery(?Village $village): Builder
+    {
+        return VillageApbdesDocument::query()
+            ->when(Schema::hasColumn('village_apbdes_documents', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
             ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
     }
 
@@ -999,9 +1350,32 @@ class HomeController extends Controller
             ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
     }
 
+    private function publishedTransparencyDocumentQuery(?Village $village): Builder
+    {
+        return VillageTransparencyDocument::query()
+            ->when(Schema::hasColumn('village_transparency_documents', 'is_published'), fn (Builder $query) => $query->where('is_published', true))
+            ->when($village, fn (Builder $query) => $query->where('village_id', $village->id));
+    }
+
     private function emptyPaginator(): LengthAwarePaginator
     {
         return new LengthAwarePaginator([], 0, 10);
+    }
+
+    private function frontendModuleStates(): array
+    {
+        return [
+            'services' => ModuleManager::isEnabled('services'),
+            'complaints' => ModuleManager::isEnabled('complaints'),
+            'news' => ModuleManager::isEnabled('news'),
+            'agendas' => ModuleManager::isEnabled('agendas'),
+            'announcements' => ModuleManager::isEnabled('announcements'),
+            'galleries' => ModuleManager::isEnabled('galleries'),
+            'transparency' => ModuleManager::isEnabled('transparency'),
+            'infographics' => ModuleManager::isEnabled('infographics'),
+            'profile' => ModuleManager::isEnabled('profile'),
+            'regulations' => ModuleManager::isEnabled('regulations'),
+        ];
     }
 
     private function buildInfographicGovernanceMeta(?Village $village): array
@@ -1014,6 +1388,7 @@ class HomeController extends Controller
             'Data statistik kategori penduduk' => 'Tabel village_population_stats',
             'Data APBDes' => 'Tabel village_apbdes_items',
             'Data infografis lainnya' => 'Tabel village_infographic_items',
+            'Data luas wilayah menurut penggunaan' => 'Tabel village_land_use_areas',
         ];
 
         $latestUpdates = collect([
@@ -1023,6 +1398,7 @@ class HomeController extends Controller
             $this->latestPublishedTableUpdate('village_population_stats', $villageId, 'is_published'),
             $this->latestPublishedTableUpdate('village_apbdes_items', $villageId, 'is_published'),
             $this->latestPublishedTableUpdate('village_infographic_items', $villageId, 'is_published'),
+            $this->latestPublishedTableUpdate('village_land_use_areas', $villageId, 'is_published'),
         ])->filter();
 
         $lastUpdate = $latestUpdates->isNotEmpty() ? Carbon::parse($latestUpdates->max()) : null;
@@ -1073,6 +1449,36 @@ class HomeController extends Controller
         } while (ServiceRequest::query()->where('public_token', $token)->exists());
 
         return $token;
+    }
+
+    private function generateComplaintTicketCode(): string
+    {
+        do {
+            $ticket = 'ADU-'.now()->format('ymd').'-'.Str::upper(Str::random(5));
+        } while (Complaint::query()->where('ticket_code', $ticket)->exists());
+
+        return $ticket;
+    }
+
+    private function generateComplaintPublicToken(): string
+    {
+        do {
+            $token = Str::random(40);
+        } while (Complaint::query()->where('public_token', $token)->exists());
+
+        return $token;
+    }
+
+    private function complaintCategories(): array
+    {
+        return [
+            'infrastruktur' => 'Infrastruktur',
+            'kebersihan-lingkungan' => 'Kebersihan Lingkungan',
+            'pelayanan-publik' => 'Pelayanan Publik',
+            'keamanan-ketertiban' => 'Keamanan & Ketertiban',
+            'sosial-kemasyarakatan' => 'Sosial Kemasyarakatan',
+            'lainnya' => 'Lainnya',
+        ];
     }
 
     private function resolveMonth(string $input): Carbon

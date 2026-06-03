@@ -9,13 +9,16 @@
 
 <section class="section-wrap">
     <div class="container-grid">
-        <article class="section-card budget-card">
-            <h1 style="margin:0; font-size: clamp(1.35rem, 2.5vw, 1.9rem);">{{ $pageMeta['title'] ?? ($org['judul'] ?? 'Susunan Organisasi Desa') }}</h1>
+        <article class="page-hero section-card">
+            <div>
+            <small>Profil Desa</small>
+            <h1>{{ $pageMeta['title'] ?? ($org['judul'] ?? 'Susunan Organisasi Desa') }}</h1>
             @if (!empty($pageMeta['subtitle']))
-                <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
+                <p>{{ $pageMeta['subtitle'] }}</p>
             @elseif (!empty($org['pengantar']))
-                <p style="margin-top:.45rem; color:#64748b;">{{ $org['pengantar'] }}</p>
+                <p>{{ $org['pengantar'] }}</p>
             @endif
+            </div>
             {{-- @if (!empty($org['sumber']))
                 <p style="margin-top:.45rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $org['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $org['sumber'] }}</a>
@@ -25,7 +28,7 @@
     </div>
 </section>
 
-<section class="section-wrap section-wrap--last">
+<section class="section-wrap--last">
     <div class="container-grid">
         @if ($officials->isEmpty())
             <article class="section-card greeting-card">

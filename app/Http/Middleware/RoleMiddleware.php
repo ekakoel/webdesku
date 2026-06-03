@@ -8,11 +8,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasRole($role)) {
+        if (!$user || $roles === []) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        $allowed = collect($roles)->contains(fn (string $role) => $user->hasRole($role));
+        if (!$allowed) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 

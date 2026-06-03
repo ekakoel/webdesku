@@ -7,6 +7,8 @@ use App\Models\Village;
 use App\Models\VillageTransparencyItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class VillageTransparencyItemController extends Controller
@@ -70,6 +72,7 @@ class VillageTransparencyItemController extends Controller
         $validated['village_id'] = $village->id;
         $validated['is_published'] = (bool) ($validated['is_published'] ?? false);
         $validated['published_at'] = $validated['is_published'] ? now() : null;
+        $this->fillDocumentUrlFromUpload($request, $validated);
 
         VillageTransparencyItem::query()->create($validated);
 
@@ -87,6 +90,8 @@ class VillageTransparencyItemController extends Controller
     public function update(Request $request, VillageTransparencyItem $villageTransparencyItem): RedirectResponse
     {
         $validated = $request->validate($this->rules());
+        $oldDocumentUrl = (string) ($villageTransparencyItem->document_url ?? '');
+        $this->fillDocumentUrlFromUpload($request, $validated, $oldDocumentUrl);
         $villageTransparencyItem->fill($validated);
         $villageTransparencyItem->is_published = (bool) ($validated['is_published'] ?? false);
         $villageTransparencyItem->published_at = $villageTransparencyItem->is_published ? ($villageTransparencyItem->published_at ?? now()) : null;
@@ -97,6 +102,7 @@ class VillageTransparencyItemController extends Controller
 
     public function destroy(VillageTransparencyItem $villageTransparencyItem): RedirectResponse
     {
+        $this->deleteLocalDocumentIfExists((string) ($villageTransparencyItem->document_url ?? ''));
         $villageTransparencyItem->delete();
 
         return redirect()->route('admin.village-transparency-items.index')->with('status', 'Data transparansi berhasil dihapus.');
@@ -111,9 +117,36 @@ class VillageTransparencyItemController extends Controller
             'amount' => ['nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
             'document_url' => ['nullable', 'url', 'max:2000'],
+            'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_published' => ['nullable', 'boolean'],
         ];
     }
-}
 
+    private function fillDocumentUrlFromUpload(Request $request, array &$validated, ?string $oldDocumentUrl = null): void
+    {
+        if (!$request->hasFile('document_file')) {
+            return;
+        }
+
+        $path = $request->file('document_file')->store('transparency-documents', 'public');
+        $validated['document_url'] = Storage::url($path);
+
+        if ($oldDocumentUrl) {
+            $this->deleteLocalDocumentIfExists($oldDocumentUrl);
+        }
+    }
+
+    private function deleteLocalDocumentIfExists(string $documentUrl): void
+    {
+        $url = trim($documentUrl);
+        if ($url === '' || !Str::startsWith($url, '/storage/')) {
+            return;
+        }
+
+        $relativePath = Str::after($url, '/storage/');
+        if ($relativePath !== '' && Storage::disk('public')->exists($relativePath)) {
+            Storage::disk('public')->delete($relativePath);
+        }
+    }
+}

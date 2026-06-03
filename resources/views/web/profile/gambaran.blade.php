@@ -5,10 +5,10 @@
     $g = $gambaran ?? [];
     $pageMeta = $g['_page'] ?? [];
     $penduduk = $g['penduduk'] ?? ['kk' => 0, 'male' => 0, 'female' => 0];
-    $male = (int) ($village?->population_male ?? ($penduduk['male'] ?? 0));
-    $female = (int) ($village?->population_female ?? ($penduduk['female'] ?? 0));
-    $kk = (int) ($village?->households ?? ($penduduk['kk'] ?? 0));
-    $jumlahPenduduk = (int) ($village?->population ?? ((int) ($penduduk['total'] ?? 0)));
+    $male = (int) (($penduduk['male'] ?? 0) ?: ($village?->population_male ?? 0));
+    $female = (int) (($penduduk['female'] ?? 0) ?: ($village?->population_female ?? 0));
+    $kk = (int) (($penduduk['kk'] ?? 0) ?: ($village?->households ?? 0));
+    $jumlahPenduduk = (int) (($penduduk['total'] ?? 0) ?: ($village?->population ?? 0));
     if ($jumlahPenduduk <= 0) {
         $jumlahPenduduk = $male + $female;
     }
@@ -30,28 +30,21 @@
         })
         ->filter(fn ($row) => $row['year'] > 0)
         ->values();
-
-    if ($pendudukTrend->isEmpty()) {
-        $pendudukTrend = collect([[
-            'year' => (int) now()->year,
-            'total' => $jumlahPenduduk,
-            'male' => $male,
-            'female' => $female,
-            'kk' => $kk,
-        ]]);
-    }
     $statKategori = $g['statistik_kategori_penduduk'] ?? [];
     $categoryMeta = \App\Models\VillagePopulationStat::categoryOptions();
 @endphp
 
 <section class="section-wrap">
     <div class="container-grid">
-        <article class="section-card budget-card">
-            <h1 style="margin:0; font-size: clamp(1.35rem, 2.5vw, 1.9rem);">{{ $pageMeta['title'] ?? ('Gambaran Umum '.($village?->name ?? 'Desa')) }}</h1>
+        <article class="page-hero section-card">
+            <div>
+                <small>Profil Desa</small>
+                <h1>{{ $pageMeta['title'] ?? ('Gambaran Umum '.($village?->name ?? 'Desa')) }}</h1>
             @if (!empty($pageMeta['subtitle']))
-                <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
+                <p>{{ $pageMeta['subtitle'] }}</p>
             @endif
-            <p style="margin-top:.65rem; color:#475569;">{{ $g['deskripsi'] ?? ($village?->description ?? 'Data gambaran umum desa belum tersedia.') }}</p>
+            <p>{{ $g['deskripsi'] ?? ($village?->description ?? 'Data gambaran umum desa belum tersedia.') }}</p>
+            </div>
             {{-- @if (!empty($g['sumber']))
                 <p style="margin-top:.5rem; color:#64748b; font-size:.86rem;">
                     Sumber data: <a href="{{ $g['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $g['sumber'] }}</a>
@@ -110,9 +103,11 @@
         <article class="section-card budget-card">
             <h2>Orbitasi</h2>
             <div class="potensi-list" style="margin-top:.7rem;">
-                @foreach (($g['orbitasi'] ?? []) as $row)
+                @forelse (($g['orbitasi'] ?? []) as $row)
                     <div><h3>{{ $row['label'] }}</h3><p>{{ $row['value'] }}</p></div>
-                @endforeach
+                @empty
+                    <p style="margin:0; color:#64748b;">Data orbitasi belum tersedia.</p>
+                @endforelse
             </div>
         </article>
     </div>
@@ -171,7 +166,7 @@
         <article class="section-card budget-card">
             <h2>Luas Wilayah Menurut Penggunaan</h2>
             <div class="infographic-grid" style="margin-top:.7rem;">
-                @foreach (($g['luas'] ?? []) as $row)
+                @forelse (($g['luas'] ?? []) as $row)
                     <article class="section-card infographic-card">
                         <div class="infographic-card__head">
                             <span style="background:#0f5e9f">Luas</span>
@@ -179,7 +174,9 @@
                         </div>
                         <p>{{ $row['value'] }}</p>
                     </article>
-                @endforeach
+                @empty
+                    <p style="margin:0; color:#64748b;">Data luas wilayah menurut penggunaan belum tersedia.</p>
+                @endforelse
             </div>
         </article>
     </div>
@@ -222,6 +219,13 @@
 
             const labels = pendudukTrend.map((x) => String(x.year));
             const values = pendudukTrend.map((x) => Number(x[dataKey] || 0));
+            if (labels.length === 0 || values.length === 0) {
+                const wrapper = el.closest('.stat-card__mini-chart');
+                if (wrapper) {
+                    wrapper.innerHTML = '<p style="margin:.25rem 0 0; font-size:.75rem; color:#64748b;">Data tren belum tersedia.</p>';
+                }
+                return;
+            }
 
             new Chart(el, {
                 type: 'line',

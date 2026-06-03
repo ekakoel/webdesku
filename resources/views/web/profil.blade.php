@@ -22,17 +22,16 @@
 
 <section class="section-wrap">
     <div class="container-grid">
-        <div id="gambaran-umum" class="section-card" style="padding: 1.2rem 1.25rem;">
-            <h1 style="font-size: clamp(1.35rem, 2.5vw, 1.9rem); margin: 0;">Profil {{ $village?->name ?? 'Desa' }}</h1>
-            <p style="margin-top: .65rem; color: #475569;">
-                {{ $village?->description ?? 'Profil desa belum tersedia.' }}
-            </p>
-            @if ($village?->address)
-                <p style="margin-top: .5rem; color: #64748b; font-size: .95rem;">
-                    {{ $village->address }}
-                </p>
-            @endif
-        </div>
+        <article id="gambaran-umum" class="page-hero section-card">
+            <div>
+                <small>Profil Desa</small>
+                <h1>Profil {{ $village?->name ?? 'Desa' }}</h1>
+                <p>{{ $village?->description ?? 'Profil desa belum tersedia.' }}</p>
+                @if ($village?->address)
+                    <p>{{ $village->address }}</p>
+                @endif
+            </div>
+        </article>
     </div>
 </section>
 

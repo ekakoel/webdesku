@@ -3,8 +3,27 @@
 @section('content')
 <section class="section-wrap">
     <div class="container-grid">
-        <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; margin: 0;">Agenda Desa</h1>
-        <p style="margin-top: .45rem; color: #4b5563;">Informasi kegiatan desa terjadwal yang dapat diikuti masyarakat.</p>
+        <article class="page-hero section-card">
+            <div>
+                <small>Agenda Desa</small>
+                <h1>Agenda Desa</h1>
+                <p>Informasi kegiatan desa terjadwal yang dapat diikuti masyarakat.</p>
+            </div>
+            <div class="page-hero__actions">
+                <form method="GET" action="{{ route('agenda') }}" class="page-hero-filter page-hero-filter--search-type">
+                    <input type="hidden" name="month" value="{{ $activeMonth->format('Y-m') }}">
+                    <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari agenda...">
+                    <select name="status">
+                        <option value="all" @selected($status === 'all')>Semua Status</option>
+                        <option value="upcoming" @selected($status === 'upcoming')>Akan Datang</option>
+                        <option value="ongoing" @selected($status === 'ongoing')>Berlangsung</option>
+                        <option value="done" @selected($status === 'done')>Selesai</option>
+                    </select>
+                    <button type="submit">Filter</button>
+                    <a href="{{ route('agenda', ['month' => $activeMonth->format('Y-m')]) }}">Reset</a>
+                </form>
+            </div>
+        </article>
     </div>
 </section>
 <section class="section-wrap">
@@ -63,23 +82,8 @@
 
 <section class="section-wrap section-wrap--last">
     <div class="container-grid">
-        <article class="section-card agenda-filter-card">
-            <form method="GET" action="{{ route('agenda') }}" class="agenda-filter-form">
-                <input type="hidden" name="month" value="{{ $activeMonth->format('Y-m') }}">
-                <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari agenda...">
-                <select name="status">
-                    <option value="all" @selected($status === 'all')>Semua Status</option>
-                    <option value="upcoming" @selected($status === 'upcoming')>Akan Datang</option>
-                    <option value="ongoing" @selected($status === 'ongoing')>Berlangsung</option>
-                    <option value="done" @selected($status === 'done')>Selesai</option>
-                </select>
-                <button type="submit">Filter Agenda</button>
-                <a href="{{ route('agenda', ['month' => $activeMonth->format('Y-m')]) }}">Reset</a>
-            </form>
-        </article>
-
         @if ($agendas->isEmpty())
-            <article class="section-card" style="margin-top: .9rem; padding: 1rem;">
+            <article class="section-card" style="padding: 1rem;">
                 <p style="margin: 0; color: #6b7280;">Belum ada agenda yang sesuai filter.</p>
             </article>
         @else

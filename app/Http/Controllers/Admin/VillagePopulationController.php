@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Village;
 use App\Models\VillagePopulation;
+use App\Services\VillageStatisticSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -41,6 +42,7 @@ class VillagePopulationController extends Controller
         $validated['published_at'] = $validated['is_published'] ? now() : null;
 
         VillagePopulation::query()->create($validated);
+        app(VillageStatisticSyncService::class)->syncPopulationSummary($village);
 
         return redirect()->route('admin.village-populations.index')->with('status', 'Data penduduk berhasil ditambahkan.');
     }
@@ -57,13 +59,22 @@ class VillagePopulationController extends Controller
         $villagePopulation->is_published = (bool) ($validated['is_published'] ?? false);
         $villagePopulation->published_at = $villagePopulation->is_published ? ($villagePopulation->published_at ?? now()) : null;
         $villagePopulation->save();
+        $village = Village::query()->find($villagePopulation->village_id);
+        if ($village) {
+            app(VillageStatisticSyncService::class)->syncPopulationSummary($village);
+        }
 
         return redirect()->route('admin.village-populations.index')->with('status', 'Data penduduk berhasil diperbarui.');
     }
 
     public function destroy(VillagePopulation $villagePopulation): RedirectResponse
     {
+        $villageId = $villagePopulation->village_id;
         $villagePopulation->delete();
+        $village = Village::query()->find($villageId);
+        if ($village) {
+            app(VillageStatisticSyncService::class)->syncPopulationSummary($village);
+        }
 
         return redirect()->route('admin.village-populations.index')->with('status', 'Data penduduk berhasil dihapus.');
     }

@@ -3,25 +3,25 @@
 @section('content')
 <section class="section-wrap">
     <div class="container-grid">
-        <div class="section-head section-head--stacked">
-            <h1 style="margin: 0; font-size: clamp(1.45rem, 3vw, 2rem);">Pengumuman Desa</h1>
-            <p>
-                Informasi resmi terbaru dari {{ $village?->name ?? 'pemerintah desa' }}.
-            </p>
-        </div>
-
-        <article class="section-card announcement-page-filter">
-            <form method="GET" action="{{ route('pengumuman') }}" class="announcement-page-filter__form">
-                <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari judul atau isi pengumuman...">
-                <select name="type">
-                    <option value="all" @selected(($selectedType ?? 'all') === 'all')>Semua Tipe</option>
-                    @foreach (($typeOptions ?? \App\Models\Announcement::typeOptions()) as $key => $meta)
-                        <option value="{{ $key }}" @selected(($selectedType ?? 'all') === $key)>{{ $meta['label'] }}</option>
-                    @endforeach
-                </select>
-                <button type="submit">Cari</button>
-                <a href="{{ route('pengumuman') }}">Reset</a>
-            </form>
+        <article class="page-hero section-card">
+            <div>
+                <small>Pengumuman Desa</small>
+                <h1>Pengumuman Desa</h1>
+                <p>Informasi resmi terbaru dari {{ $village?->name ?? 'pemerintah desa' }}.</p>
+            </div>
+            <div class="page-hero__actions">
+                <form method="GET" action="{{ route('pengumuman') }}" class="page-hero-filter page-hero-filter--search-type">
+                    <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari judul atau isi pengumuman...">
+                    <select name="type">
+                        <option value="all" @selected(($selectedType ?? 'all') === 'all')>Semua Tipe</option>
+                        @foreach (($typeOptions ?? \App\Models\Announcement::typeOptions()) as $key => $meta)
+                            <option value="{{ $key }}" @selected(($selectedType ?? 'all') === $key)>{{ $meta['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit">Cari</button>
+                    <a href="{{ route('pengumuman') }}">Reset</a>
+                </form>
+            </div>
         </article>
     </div>
 </section>

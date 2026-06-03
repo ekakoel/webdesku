@@ -35,6 +35,15 @@
         <label for="document_url" class="block text-sm font-medium text-gray-700">Link Dokumen (Opsional)</label>
         <input id="document_url" name="document_url" type="url" value="{{ old('document_url', $item->document_url ?? '') }}" placeholder="https://..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
     </div>
+    <div>
+        <label for="document_file" class="block text-sm font-medium text-gray-700">Upload Dokumen (Opsional)</label>
+        <input id="document_file" name="document_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        <p class="mt-1 text-xs text-gray-500">Jika upload file, sistem akan menyimpan dokumen ke server dan otomatis mengisi link dokumen.</p>
+        @if (!empty($item->document_url))
+            <a href="{{ $item->document_url }}" target="_blank" rel="noopener" class="mt-1 inline-block text-xs text-blue-700 hover:underline">Lihat dokumen saat ini</a>
+        @endif
+        @error('document_file') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+    </div>
 
     <div>
         <label for="description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
@@ -52,4 +61,3 @@
         <a href="{{ route('admin.village-transparency-items.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
     </div>
 </div>
-

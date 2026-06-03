@@ -35,6 +35,13 @@ class Village extends Model
         'vision',
         'mission',
         'head_greeting',
+        'instagram_enabled',
+        'instagram_username',
+        'instagram_user_id',
+        'instagram_access_token',
+        'instagram_connected_at',
+        'instagram_last_sync_at',
+        'instagram_last_error',
         'quick_info',
         'apb_income',
         'apb_expense',
@@ -47,6 +54,9 @@ class Village extends Model
     protected $casts = [
         'quick_info' => 'array',
         'boundary_geojson' => 'array',
+        'instagram_enabled' => 'boolean',
+        'instagram_connected_at' => 'datetime',
+        'instagram_last_sync_at' => 'datetime',
     ];
 
     public function getLogoUrlAttribute(): ?string
@@ -118,9 +128,19 @@ class Village extends Model
         return $this->hasMany(VillagePopulationStat::class);
     }
 
+    public function landUseAreas(): HasMany
+    {
+        return $this->hasMany(VillageLandUseArea::class);
+    }
+
     public function apbdesItems(): HasMany
     {
         return $this->hasMany(VillageApbdesItem::class);
+    }
+
+    public function apbdesDocuments(): HasMany
+    {
+        return $this->hasMany(VillageApbdesDocument::class);
     }
 
     public function infographicItems(): HasMany
@@ -131,5 +151,22 @@ class Village extends Model
     public function transparencyItems(): HasMany
     {
         return $this->hasMany(VillageTransparencyItem::class);
+    }
+
+    public function transparencyDocuments(): HasMany
+    {
+        return $this->hasMany(VillageTransparencyDocument::class);
+    }
+
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class);
+    }
+
+    public function instagramPosts(): HasMany
+    {
+        return $this->hasMany(VillageInstagramPost::class)
+            ->orderByDesc('posted_at')
+            ->orderByDesc('id');
     }
 }

@@ -7,7 +7,7 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form action="{{ route('admin.village-transparency-items.update', $item) }}" method="POST">
+                    <form action="{{ route('admin.village-transparency-items.update', $item) }}" method="POST" enctype="multipart/form-data">
                         @method('PUT')
                         @include('admin.village-transparency-items._form', ['submitLabel' => 'Perbarui Data'])
                     </form>
@@ -16,4 +16,3 @@
         </div>
     </div>
 </x-app-layout>
-

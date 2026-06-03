@@ -2,14 +2,23 @@
 
 @section('content')
 <section class="section-wrap">
-    <div class="container-grid" style="max-width: 900px;">
-            <a href="{{ route('berita') }}" class="text-link">Kembali ke Arsip Berita</a>
-        <article class="section-card" style="margin-top: .85rem; overflow: hidden;">
+    <div class="container-grid container-grid--narrow page-section-stack">
+        <article class="page-hero section-card">
+            <div>
+                <small>Berita Desa</small>
+                <h1>{{ $news->title }}</h1>
+                <p>Publikasi informasi resmi dan terkini dari desa.</p>
+            </div>
+            <div class="page-hero__actions">
+                <a href="{{ route('berita') }}" class="text-link">Kembali ke Arsip Berita</a>
+            </div>
+        </article>
+        <article class="section-card" style="overflow: hidden;">
             @if ($news->thumbnail_url)
                 <img src="{{ $news->thumbnail_url }}" alt="{{ $news->title }}" style="width: 100%; max-height: 420px; object-fit: cover;" loading="lazy" decoding="async">
             @endif
             <div style="padding: 1.2rem;">
-                <h1 style="margin: 0; font-size: clamp(1.3rem, 2.8vw, 2rem);">{{ $news->title }}</h1>
+                <h2 style="margin: 0; font-size: clamp(1.15rem, 2.4vw, 1.5rem);">{{ $news->title }}</h2>
                 <p style="margin: .45rem 0 0; color: #4b5563; font-size: .92rem;">
                     Diposting oleh {{ $news->author?->name ?? 'Admin Desa' }} |
                     {{ $news->published_at?->translatedFormat('d F Y, H:i') ?? $news->created_at?->translatedFormat('d F Y, H:i') }} |
@@ -35,7 +44,7 @@
         </article>
 
         @if ($relatedNews->isNotEmpty())
-            <div class="section-head" style="margin-top: 1.1rem;">
+            <div class="section-head">
                 <h2>Baca Juga</h2>
             </div>
             <div class="news-modern-grid">

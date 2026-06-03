@@ -8,11 +8,14 @@
 
 <section class="section-wrap">
     <div class="container-grid">
-        <article class="section-card budget-card">
-            <h1 style="margin:0; font-size: clamp(1.35rem, 2.5vw, 1.9rem);">{{ $pageMeta['title'] ?? 'Visi dan Misi Desa' }}</h1>
+        <article class="page-hero section-card">
+            <div>
+            <small>Profil Desa</small>
+            <h1>{{ $pageMeta['title'] ?? 'Visi dan Misi Desa' }}</h1>
             @if (!empty($pageMeta['subtitle']))
-                <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
+                <p>{{ $pageMeta['subtitle'] }}</p>
             @endif
+            </div>
             {{-- @if (!empty($vm['sumber']))
                 <p style="margin-top:.45rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $vm['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $vm['sumber'] }}</a>

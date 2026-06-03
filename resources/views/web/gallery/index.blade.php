@@ -2,13 +2,14 @@
 
 @section('content')
 <section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head section-head--stacked">
-            <h1 style="margin: 0; font-size: clamp(1.5rem, 3vw, 2rem);">Galeri Desa</h1>
-            <p style="margin-top: .45rem; color: #4b5563;">
-                Dokumentasi kegiatan {{ $village?->name ?? 'desa' }} dalam format visual.
-            </p>
-        </div>
+    <div class="container-grid page-section-stack">
+        <article class="page-hero section-card">
+            <div>
+                <small>Galeri Desa</small>
+                <h1>Galeri Desa</h1>
+                <p>Dokumentasi kegiatan {{ $village?->name ?? 'desa' }} dalam format visual.</p>
+            </div>
+        </article>
 
         @if ($galleries->isEmpty())
             <article class="section-card" style="padding: 1rem;">
@@ -115,4 +116,3 @@
     })();
 </script>
 @endsection
-

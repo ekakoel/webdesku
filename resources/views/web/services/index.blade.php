@@ -3,13 +3,16 @@
 @section('content')
 <section class="section-wrap">
     <div class="container-grid">
-        <div class="section-head">
-            <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; margin: 0;">Layanan Desa</h1>
-            <a href="{{ route('services.status') }}" class="text-link">Cek Status Pengajuan</a>
-        </div>
-        <p style="margin-top: .45rem; color: #4b5563;">
-            Ajukan layanan administrasi desa secara online. Pilih layanan sesuai kebutuhan Anda.
-        </p>
+        <article class="page-hero section-card">
+            <div>
+                <small>Layanan Desa</small>
+                <h1>Layanan Desa</h1>
+                <p>Ajukan layanan administrasi desa secara online. Pilih layanan sesuai kebutuhan Anda.</p>
+            </div>
+            <div class="page-hero__actions">
+                <a href="{{ route('services.status') }}" class="text-link">Cek Status Pengajuan</a>
+            </div>
+        </article>
     </div>
 </section>
 

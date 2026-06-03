@@ -2,8 +2,17 @@
 
 @section('content')
 <section class="section-wrap">
-    <div class="container-grid" style="max-width: 900px;">
-        <a href="{{ route('agenda') }}" class="text-link">Kembali ke Agenda</a>
+    <div class="container-grid container-grid--narrow page-section-stack">
+        <article class="page-hero section-card">
+            <div>
+                <small>Agenda Desa</small>
+                <h1>{{ $agenda->title }}</h1>
+                <p>Detail jadwal kegiatan desa beserta informasi waktu dan lokasi.</p>
+            </div>
+            <div class="page-hero__actions">
+                <a href="{{ route('agenda') }}" class="text-link">Kembali ke Agenda</a>
+            </div>
+        </article>
 
         @php
             $now = now();
@@ -45,7 +54,7 @@
         </article>
 
         @if ($relatedAgendas->isNotEmpty())
-            <div class="section-head" style="margin-top: 1rem;">
+            <div class="section-head">
                 <h2>Agenda Lainnya</h2>
             </div>
             <div class="agenda-list">

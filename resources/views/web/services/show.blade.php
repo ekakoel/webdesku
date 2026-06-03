@@ -2,15 +2,28 @@
 
 @section('content')
 <section class="section-wrap">
+    <div class="container-grid">
+        <article class="page-hero section-card">
+            <div>
+                <small>Layanan Desa</small>
+                <h1>{{ $service->name }}</h1>
+                <p>{{ $service->description ?: 'Informasi layanan administrasi desa.' }}</p>
+            </div>
+            <div class="page-hero__actions">
+                <a href="{{ route('services') }}" class="text-link">Kembali ke Daftar Layanan</a>
+                <span style="margin: 0 .45rem; color:#dbeafe;">|</span>
+                <a href="{{ route('services.status') }}" class="text-link">Cek Status Pengajuan</a>
+            </div>
+        </article>
+    </div>
+</section>
+<section class="section-wrap section-wrap--last">
     <div class="container-grid split">
         <article class="section-card service-detail-card">
-            <a href="{{ route('services') }}" class="text-link">Kembali ke Daftar Layanan</a>
-            <span style="margin-left: .7rem; color:#9ca3af;">|</span>
-            <a href="{{ route('services.status') }}" class="text-link" style="margin-left: .7rem;">Cek Status Pengajuan</a>
             <div class="service-detail-card__header">
                 <span>{{ $service->icon ?: 'SV' }}</span>
                 <div>
-                    <h1>{{ $service->name }}</h1>
+                    <h2>{{ $service->name }}</h2>
                     <p>{{ $service->description ?: 'Informasi layanan administrasi desa.' }}</p>
                     <p style="margin-top: .35rem; font-weight: 700; color: #0c3f7f;">Target SLA: {{ (int) ($service->sla_target_hours ?? 72) }} jam kerja</p>
                 </div>

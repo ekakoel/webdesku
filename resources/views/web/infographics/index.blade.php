@@ -2,18 +2,50 @@
 
 @section('content')
 <section class="section-wrap">
-    <div class="container-grid">
-        <div class="section-head section-head--stacked">
-            <h1 style="margin: 0; font-size: clamp(1.5rem, 3vw, 2rem);">Infografis Desa</h1>
-            <p style="margin-top: .4rem; color: #4b5563;">
-                Data visual desa meliputi aset, penduduk, APBDes, dan indikator penting lainnya.
-            </p>
-        </div>
+    <div class="container-grid page-section-stack">
+        <article class="page-hero section-card">
+            <div>
+                <small>Infografis Desa</small>
+                <h1>Infografis Desa</h1>
+                <p>Data visual desa meliputi aset, penduduk, dan indikator penting lainnya.</p>
+            </div>
+            @if ($tab === 'aset')
+                <div class="page-hero__actions">
+                    <form method="GET" action="{{ route('infografis') }}" class="page-hero-filter page-hero-filter--search-type">
+                        <input type="hidden" name="tab" value="aset">
+                        <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari aset/UMKM/fasilitas...">
+                        <select name="type">
+                            <option value="all" @selected($type === 'all')>Semua Tipe</option>
+                            @foreach ($typeOptions as $key => $option)
+                                <option value="{{ $key }}" @selected($type === $key)>{{ $option['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit">Filter</button>
+                        <a href="{{ route('infografis', ['tab' => 'aset']) }}">Reset</a>
+                    </form>
+                </div>
+            @elseif ($tab === 'penduduk')
+                <div class="page-hero__actions">
+                    <form method="GET" action="{{ route('infografis') }}" class="page-hero-filter page-hero-filter--year">
+                        <input type="hidden" name="tab" value="penduduk">
+                        <label for="populationYear">Tahun Data</label>
+                        <div>
+                            <select id="populationYear" name="year">
+                                <option value="">Semua Tahun</option>
+                                @foreach (($populationYears ?? collect()) as $yearOption)
+                                    <option value="{{ $yearOption }}" @selected((int) ($selectedPopulationYear ?? 0) === (int) $yearOption)>{{ $yearOption }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit">Tampilkan</button>
+                        </div>
+                    </form>
+                </div>
+            @endif
+        </article>
 
         <div class="infographic-tabs">
             <a href="{{ route('infografis', ['tab' => 'aset']) }}" class="{{ $tab === 'aset' ? 'is-active' : '' }}">Aset Desa</a>
             <a href="{{ route('infografis', ['tab' => 'penduduk']) }}" class="{{ $tab === 'penduduk' ? 'is-active' : '' }}">Penduduk</a>
-            <a href="{{ route('infografis', ['tab' => 'apbdes']) }}" class="{{ $tab === 'apbdes' ? 'is-active' : '' }}">APBDes</a>
             <a href="{{ route('infografis', ['tab' => 'lainnya']) }}" class="{{ $tab === 'lainnya' ? 'is-active' : '' }}">Lainnya</a>
         </div>
 
@@ -71,23 +103,8 @@
 
     <section class="section-wrap section-wrap--last">
         <div class="container-grid">
-            <article class="section-card infographic-filter-card">
-                <form method="GET" action="{{ route('infografis') }}" class="infographic-filter-form">
-                    <input type="hidden" name="tab" value="aset">
-                    <input type="text" name="q" value="{{ $keyword }}" placeholder="Cari aset/UMKM/fasilitas...">
-                    <select name="type">
-                        <option value="all" @selected($type === 'all')>Semua Tipe</option>
-                        @foreach ($typeOptions as $key => $option)
-                            <option value="{{ $key }}" @selected($type === $key)>{{ $option['label'] }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit">Filter</button>
-                    <a href="{{ route('infografis', ['tab' => 'aset']) }}">Reset</a>
-                </form>
-            </article>
-
             @if ($assets->isEmpty())
-                <article class="section-card" style="margin-top: .9rem; padding: 1rem;">
+                <article class="section-card" style="padding: 1rem;">
                     <p style="margin: 0; color: #6b7280;">Belum ada data aset desa yang sesuai filter.</p>
                 </article>
             @else
@@ -181,8 +198,9 @@
                 </article>
             @else
                 @php
-                    $latestPopulation = $populations->first();
-                    $previousPopulation = $populations->skip(1)->first();
+                    $latestPopulation = $latestPopulation ?? $populations->first();
+                    $comparisonRows = ($populationVisibleRows ?? collect())->values();
+                    $previousPopulation = $comparisonRows->skip(1)->first();
                     $latestTotal = $latestPopulation?->total() ?? 0;
                     $previousTotal = $previousPopulation?->total() ?? 0;
                     $growth = $latestTotal - $previousTotal;
@@ -190,18 +208,6 @@
                     $malePercent = $latestTotal > 0 ? (($latestPopulation?->male ?? 0) / $latestTotal) * 100 : 0;
                     $femalePercent = $latestTotal > 0 ? (($latestPopulation?->female ?? 0) / $latestTotal) * 100 : 0;
                 @endphp
-
-                <article class="population-banner section-card">
-                    <div>
-                        <small>Demografi Penduduk</small>
-                        <h2>Data Kependudukan Desa {{ $village?->name ?? '' }}</h2>
-                        <p>Statistik penduduk per tahun dengan komposisi laki-laki, perempuan, kepala keluarga, dan tren pertumbuhan.</p>
-                    </div>
-                    <div class="population-banner__meta">
-                        <strong>{{ $latestPopulation?->year ?? '-' }}</strong>
-                        <span>Tahun Data Terbaru</span>
-                    </div>
-                </article>
 
                 <div class="population-kpi-grid">
                     <article class="section-card population-kpi-card">
@@ -332,7 +338,7 @@
                 <article class="section-card population-table-card">
                     <div class="population-chart-card__head">
                         <h3>Riwayat Data Penduduk</h3>
-                        <small>Menampilkan {{ $populations->count() }} tahun data</small>
+                        <small>Menampilkan {{ ($populationVisibleRows ?? collect())->count() }} tahun data</small>
                     </div>
                     <div class="population-table-wrap">
                         <table>
@@ -346,7 +352,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($populations as $item)
+                                @foreach (($populationVisibleRows ?? $populations) as $item)
                                     <tr>
                                         <td>{{ $item->year }}</td>
                                         <td>{{ number_format((int) $item->male, 0, ',', '.') }}</td>
@@ -359,68 +365,6 @@
                         </table>
                     </div>
                 </article>
-            @endif
-        </div>
-    </section>
-@elseif ($tab === 'apbdes')
-    <section class="section-wrap section-wrap--last">
-        <div class="container-grid">
-            <article class="section-card infographic-filter-card">
-                <form method="GET" action="{{ route('infografis') }}" class="infographic-filter-form">
-                    <input type="hidden" name="tab" value="apbdes">
-                    <select name="year">
-                        @foreach ($apbdesYears as $yearOption)
-                            <option value="{{ $yearOption }}" @selected($selectedYear === (int) $yearOption)>Tahun {{ $yearOption }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit">Tampilkan</button>
-                    <a href="{{ route('infografis', ['tab' => 'apbdes']) }}">Reset</a>
-                </form>
-            </article>
-
-            @if ($apbdesItems->isEmpty())
-                <article class="section-card" style="margin-top: .9rem; padding: 1rem;">
-                    <p style="margin: 0; color: #6b7280;">Data APBDes belum tersedia.</p>
-                </article>
-            @else
-                <div class="stats-grid stats-grid--wide" style="margin-top: .9rem;">
-                    <article class="section-card stat-card">
-                        <h3>Rp {{ number_format($apbdesSummary['pendapatan'], 0, ',', '.') }}</h3>
-                        <p>Total Pendapatan</p>
-                    </article>
-                    <article class="section-card stat-card">
-                        <h3>Rp {{ number_format($apbdesSummary['belanja'], 0, ',', '.') }}</h3>
-                        <p>Total Belanja</p>
-                    </article>
-                    <article class="section-card stat-card">
-                        <h3>Rp {{ number_format($apbdesSummary['pembiayaan'], 0, ',', '.') }}</h3>
-                        <p>Total Pembiayaan</p>
-                    </article>
-                </div>
-                <div class="infographic-grid">
-                    @foreach ($apbdesItems as $item)
-                        <article class="section-card infographic-card">
-                            <div class="infographic-card__head">
-                                <span style="background: #0f5e9f">
-                                    @if ($item->type === 'belanja')
-                                        <i class="fa-solid fa-bag-shopping" aria-label="Belanja"></i>
-                                    @elseif ($item->type === 'pendapatan')
-                                        <i class="fa-solid fa-wallet" aria-label="Pendapatan"></i>
-                                    @elseif ($item->type === 'pembiayaan')
-                                        <i class="fa-solid fa-hand-holding-dollar" aria-label="Pembiayaan"></i>
-                                    @else
-                                        {{ $item->typeLabel() }}
-                                    @endif
-                                </span>
-                                <h3>{{ $item->category }}</h3>
-                            </div>
-                            <p>Rp {{ number_format((int) $item->amount, 0, ',', '.') }}</p>
-                            @if ($item->notes)
-                                <div class="infographic-card__meta"><small>{{ $item->notes }}</small></div>
-                            @endif
-                        </article>
-                    @endforeach
-                </div>
             @endif
         </div>
     </section>
@@ -538,16 +482,30 @@
 
             if (villageBoundary && typeof villageBoundary === 'object') {
                 try {
+                    const boundaryStyle = {
+                        color: '#1d4ed8',
+                        weight: 3,
+                        opacity: 1,
+                        dashArray: '14 10',
+                        dashOffset: '0',
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        fillColor: '#1d4ed8',
+                        fillOpacity: 0.04,
+                        className: 'village-boundary-stroke',
+                    };
+
                     const boundaryLayer = L.geoJSON(villageBoundary, {
-                        style: {
-                            color: '#1b63bf',
-                            weight: 2,
-                            opacity: 0.95,
-                            fillColor: '#1b63bf',
-                            fillOpacity: 0.06,
-                            dashArray: '6 6',
-                        }
+                        style: () => boundaryStyle,
                     }).addTo(map);
+                    boundaryLayer.eachLayer((layer) => {
+                        if (layer && typeof layer.setStyle === 'function') {
+                            layer.setStyle(boundaryStyle);
+                        }
+                    });
+                    if (typeof boundaryLayer.bringToFront === 'function') {
+                        boundaryLayer.bringToFront();
+                    }
 
                     const boundaryBounds = boundaryLayer.getBounds();
                     if (boundaryBounds && boundaryBounds.isValid()) {
@@ -792,10 +750,6 @@
 @endif
 
 @if ($tab === 'lainnya')
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
-@endif
-
-@if ($tab === 'apbdes')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
 @endif
 

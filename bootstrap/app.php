@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'identifyVillage' => \App\Http\Middleware\IdentifyVillage::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

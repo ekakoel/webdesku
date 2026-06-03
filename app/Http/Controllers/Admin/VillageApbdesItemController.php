@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Village;
 use App\Models\VillageApbdesItem;
+use App\Services\VillageStatisticSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -59,6 +60,7 @@ class VillageApbdesItemController extends Controller
         $validated['published_at'] = $validated['is_published'] ? now() : null;
 
         VillageApbdesItem::query()->create($validated);
+        app(VillageStatisticSyncService::class)->syncApbdesSummary($village);
 
         return redirect()->route('admin.village-apbdes-items.index')->with('status', 'Data APBDes berhasil ditambahkan.');
     }
@@ -78,13 +80,22 @@ class VillageApbdesItemController extends Controller
         $villageApbdesItem->is_published = (bool) ($validated['is_published'] ?? false);
         $villageApbdesItem->published_at = $villageApbdesItem->is_published ? ($villageApbdesItem->published_at ?? now()) : null;
         $villageApbdesItem->save();
+        $village = Village::query()->find($villageApbdesItem->village_id);
+        if ($village) {
+            app(VillageStatisticSyncService::class)->syncApbdesSummary($village);
+        }
 
         return redirect()->route('admin.village-apbdes-items.index')->with('status', 'Data APBDes berhasil diperbarui.');
     }
 
     public function destroy(VillageApbdesItem $villageApbdesItem): RedirectResponse
     {
+        $villageId = $villageApbdesItem->village_id;
         $villageApbdesItem->delete();
+        $village = Village::query()->find($villageId);
+        if ($village) {
+            app(VillageStatisticSyncService::class)->syncApbdesSummary($village);
+        }
 
         return redirect()->route('admin.village-apbdes-items.index')->with('status', 'Data APBDes berhasil dihapus.');
     }
@@ -102,4 +113,3 @@ class VillageApbdesItemController extends Controller
         ];
     }
 }
-

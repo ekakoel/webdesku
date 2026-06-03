@@ -8,12 +8,15 @@
 
 <section class="section-wrap">
     <div class="container-grid">
-        <article class="section-card greeting-card">
-            <h1 style="margin:0; font-size: clamp(1.35rem, 2.5vw, 1.9rem);">{{ $pageMeta['title'] ?? 'Sejarah Desa' }}</h1>
+        <article class="page-hero section-card">
+            <div>
+            <small>Profil Desa</small>
+            <h1>{{ $pageMeta['title'] ?? 'Sejarah Desa' }}</h1>
             @if (!empty($pageMeta['subtitle']))
-                <p style="margin-top:.45rem; color:#64748b;">{{ $pageMeta['subtitle'] }}</p>
+                <p>{{ $pageMeta['subtitle'] }}</p>
             @endif
-            <p style="margin-top:.7rem;">{{ $village->history ?? 'Data sejarah desa belum tersedia.' }}</p>
+            <p>{{ $village->history ?? 'Data sejarah desa belum tersedia.' }}</p>
+            </div>
             {{-- @if (!empty($sejarah['sumber']))
                 <p style="margin-top:.5rem; color:#64748b; font-size:.86rem;">
                     Sumber referensi: <a href="{{ $sejarah['sumber'] }}" target="_blank" rel="noopener" class="text-link">{{ $sejarah['sumber'] }}</a>

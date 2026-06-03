@@ -1,32 +1,60 @@
 @php
+    $moduleManager = \App\Support\ModuleManager::class;
+    $servicesModuleEnabled = $moduleManager::isEnabled('services');
+    $newsModuleEnabled = $moduleManager::isEnabled('news');
+    $agendaModuleEnabled = $moduleManager::isEnabled('agendas');
+    $announcementModuleEnabled = $moduleManager::isEnabled('announcements');
+    $regulationsModuleEnabled = $moduleManager::isEnabled('regulations');
+    $galleryModuleEnabled = $moduleManager::isEnabled('galleries');
+    $infographicsModuleEnabled = $moduleManager::isEnabled('infographics');
+    $transparencyModuleEnabled = $moduleManager::isEnabled('transparency');
+    $profileModuleEnabled = $moduleManager::isEnabled('profile');
+    $complaintsModuleEnabled = $moduleManager::isEnabled('complaints');
     $adminMenuGroups = [
         'Konten Publik' => [
-            ['route' => 'admin.news.index', 'label' => 'Kelola Berita'],
-            ['route' => 'admin.agendas.index', 'label' => 'Kelola Agenda'],
-            ['route' => 'admin.announcements.index', 'label' => 'Kelola Pengumuman'],
-            ['route' => 'admin.galleries.index', 'label' => 'Kelola Galeri'],
+            ...($newsModuleEnabled ? [['route' => 'admin.news.index', 'label' => 'Kelola Berita']] : []),
+            ...($agendaModuleEnabled ? [['route' => 'admin.agendas.index', 'label' => 'Kelola Agenda']] : []),
+            ...($announcementModuleEnabled ? [['route' => 'admin.announcements.index', 'label' => 'Kelola Pengumuman']] : []),
+            ...($regulationsModuleEnabled ? [['route' => 'admin.regulations.index', 'label' => 'Kelola Peraturan Desa']] : []),
+            ...($galleryModuleEnabled ? [['route' => 'admin.galleries.index', 'label' => 'Kelola Galeri']] : []),
             ['route' => 'admin.sliders.index', 'label' => 'Kelola Slider Beranda'],
         ],
         'Layanan Desa' => [
-            ['route' => 'admin.services.index', 'label' => 'Kelola Layanan'],
-            ['route' => 'admin.service-requests.index', 'label' => 'Pengajuan Layanan'],
+            ...($servicesModuleEnabled ? [
+                ['route' => 'admin.services.index', 'label' => 'Kelola Layanan'],
+                ['route' => 'admin.service-requests.index', 'label' => 'Pengajuan Layanan'],
+            ] : []),
+            ...($complaintsModuleEnabled ? [['route' => 'admin.complaints.index', 'label' => 'Pengaduan Masyarakat']] : []),
         ],
         'Infografis & Transparansi' => [
-            ['route' => 'admin.village-assets.index', 'label' => 'Kelola Aset Desa (Map)'],
-            ['route' => 'admin.village-populations.index', 'label' => 'Kelola Penduduk (Infografis)'],
-            ['route' => 'admin.village-population-stats.index', 'label' => 'Kelola Statistik Penduduk'],
-            ['route' => 'admin.village-apbdes-items.index', 'label' => 'Kelola APBDes (Infografis)'],
-            ['route' => 'admin.village-transparency-items.index', 'label' => 'Kelola Transparansi Desa'],
-            ['route' => 'admin.village-infographic-items.index', 'label' => 'Kelola Infografis Lainnya'],
+            ...($infographicsModuleEnabled ? [
+                ['route' => 'admin.village-assets.index', 'label' => 'Kelola Aset Desa (Map)'],
+                ['route' => 'admin.village-populations.index', 'label' => 'Kelola Penduduk (Infografis)'],
+                ['route' => 'admin.village-population-stats.index', 'label' => 'Kelola Statistik Penduduk'],
+                ['route' => 'admin.village-infographic-items.index', 'label' => 'Kelola Infografis Lainnya'],
+            ] : []),
+            ...($transparencyModuleEnabled ? [
+                ['route' => 'admin.village-apbdes-items.index', 'label' => 'Kelola APBDes (Infografis)'],
+                ['route' => 'admin.village-apbdes-documents.index', 'label' => 'Dokumen/Laporan APBDes'],
+                ['route' => 'admin.village-transparency-items.index', 'label' => 'Kelola Transparansi Desa'],
+                ['route' => 'admin.village-transparency-documents.index', 'label' => 'Kelola Dokumen Transparansi'],
+            ] : []),
         ],
         'Profil & Organisasi Desa' => [
             ['route' => 'admin.village-settings.edit', 'label' => 'Pengaturan Desa'],
-            ['route' => 'admin.head-messages.index', 'label' => 'Kelola Sambutan Kades'],
-            ['route' => 'admin.officials.index', 'label' => 'Kelola Aparatur Desa'],
-            ['route' => 'admin.profile-pages.index', 'label' => 'Kelola Halaman Profil Desa'],
+            ['route' => 'admin.data-lineage.index', 'label' => 'Data Lineage & Governance'],
+            ...($profileModuleEnabled ? [
+                ['route' => 'admin.head-messages.index', 'label' => 'Kelola Sambutan Kades'],
+                ['route' => 'admin.officials.index', 'label' => 'Kelola Aparatur Desa'],
+                ['route' => 'admin.profile-pages.index', 'label' => 'Kelola Halaman Profil Desa'],
+                ['route' => 'admin.village-land-use-areas.index', 'label' => 'Luas Wilayah Menurut Penggunaan'],
+            ] : []),
             ['route' => 'admin.village-map.edit', 'label' => 'Kelola Map Desa'],
         ],
     ];
+    $adminMenuGroups = collect($adminMenuGroups)
+        ->filter(fn (array $groupItems) => count($groupItems) > 0)
+        ->toArray();
 @endphp
 
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
@@ -47,7 +75,12 @@
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
                         </x-nav-link>
-                        @if (auth()->user()?->isAparat())
+                        @if (auth()->user()?->isSuperAdmin())
+                            <x-nav-link :href="route('super-admin.modules.index')" :active="request()->routeIs('super-admin.modules.*')">
+                                {{ __('Super Admin') }}
+                            </x-nav-link>
+                        @endif
+                        @if (auth()->user()?->isAparat() || auth()->user()?->isSuperAdmin())
                             @foreach ($adminMenuGroups as $groupLabel => $groupItems)
                                 <x-dropdown align="left" width="64">
                                     <x-slot name="trigger">
@@ -88,7 +121,7 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        @if (auth()->user()?->isAparat())
+                        @if (auth()->user()?->isAparat() || auth()->user()?->isSuperAdmin())
                             <x-dropdown-link :href="route('admin.dashboard')">
                                 {{ __('Admin Dashboard') }}
                             </x-dropdown-link>
@@ -130,7 +163,7 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            @if (auth()->user()?->isAparat())
+            @if (auth()->user()?->isAparat() || auth()->user()?->isSuperAdmin())
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
                     {{ __('Admin Desa') }}
                 </x-responsive-nav-link>
@@ -144,6 +177,11 @@
                         </x-responsive-nav-link>
                     @endforeach
                 @endforeach
+            @endif
+            @if (auth()->user()?->isSuperAdmin())
+                <x-responsive-nav-link :href="route('super-admin.modules.index')" :active="request()->routeIs('super-admin.modules.*')">
+                    {{ __('Super Admin') }}
+                </x-responsive-nav-link>
             @endif
         </div>
 

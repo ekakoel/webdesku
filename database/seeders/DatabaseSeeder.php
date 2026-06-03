@@ -21,6 +21,15 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        User::firstOrCreate([
+            'email' => 'superadmin@webdesku.test',
+        ], [
+            'name' => 'Super Admin',
+            'password' => bcrypt('password'),
+            'role' => 'super_admin',
+            'email_verified_at' => now(),
+        ]);
+
         $this->call(DanginPuriKauhSeeder::class);
     }
 }

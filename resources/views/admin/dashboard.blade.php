@@ -47,6 +47,8 @@
                         <span class="text-xs font-semibold text-slate-500">Backend Operasional</span>
                     </div>
                     @php
+                        $servicesModuleEnabled = \App\Support\ModuleManager::isEnabled('services');
+                        $regulationsModuleEnabled = \App\Support\ModuleManager::isEnabled('regulations');
                         $quickGroups = [
                             [
                                 'title' => 'Konten Publik',
@@ -54,6 +56,7 @@
                                     ['route' => 'admin.news.index', 'active' => 'admin.news.*', 'label' => 'Kelola Berita', 'icon' => 'fa-solid fa-newspaper', 'class' => 'border-blue-100 bg-blue-50 text-blue-800 hover:bg-blue-100'],
                                     ['route' => 'admin.agendas.index', 'active' => 'admin.agendas.*', 'label' => 'Kelola Agenda', 'icon' => 'fa-solid fa-calendar-days', 'class' => 'border-indigo-100 bg-indigo-50 text-indigo-800 hover:bg-indigo-100'],
                                     ['route' => 'admin.announcements.index', 'active' => 'admin.announcements.*', 'label' => 'Kelola Pengumuman', 'icon' => 'fa-solid fa-bullhorn', 'class' => 'border-cyan-100 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'],
+                                    ...($regulationsModuleEnabled ? [['route' => 'admin.regulations.index', 'active' => 'admin.regulations.*', 'label' => 'Kelola Peraturan Desa', 'icon' => 'fa-solid fa-scale-balanced', 'class' => 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100']] : []),
                                     ['route' => 'admin.galleries.index', 'active' => 'admin.galleries.*', 'label' => 'Kelola Galeri', 'icon' => 'fa-solid fa-images', 'class' => 'border-teal-100 bg-teal-50 text-teal-800 hover:bg-teal-100'],
                                     ['route' => 'admin.sliders.index', 'active' => 'admin.sliders.*', 'label' => 'Kelola Slider Beranda', 'icon' => 'fa-solid fa-panorama', 'class' => 'border-violet-100 bg-violet-50 text-violet-800 hover:bg-violet-100'],
                                 ],
@@ -61,8 +64,11 @@
                             [
                                 'title' => 'Layanan Desa',
                                 'modules' => [
-                                    ['route' => 'admin.services.index', 'active' => 'admin.services.*', 'label' => 'Kelola Layanan', 'icon' => 'fa-solid fa-handshake', 'class' => 'border-sky-100 bg-sky-50 text-sky-800 hover:bg-sky-100'],
-                                    ['route' => 'admin.service-requests.index', 'active' => 'admin.service-requests.*', 'label' => 'Pengajuan Layanan', 'icon' => 'fa-solid fa-file-signature', 'class' => 'border-cyan-100 bg-cyan-50 text-cyan-900 hover:bg-cyan-100'],
+                                    ...($servicesModuleEnabled ? [
+                                        ['route' => 'admin.services.index', 'active' => 'admin.services.*', 'label' => 'Kelola Layanan', 'icon' => 'fa-solid fa-handshake', 'class' => 'border-sky-100 bg-sky-50 text-sky-800 hover:bg-sky-100'],
+                                        ['route' => 'admin.service-requests.index', 'active' => 'admin.service-requests.*', 'label' => 'Pengajuan Layanan', 'icon' => 'fa-solid fa-file-signature', 'class' => 'border-cyan-100 bg-cyan-50 text-cyan-900 hover:bg-cyan-100'],
+                                    ] : []),
+                                    ['route' => 'admin.complaints.index', 'active' => 'admin.complaints.*', 'label' => 'Pengaduan Masyarakat', 'icon' => 'fa-solid fa-triangle-exclamation', 'class' => 'border-amber-100 bg-amber-50 text-amber-900 hover:bg-amber-100'],
                                 ],
                             ],
                             [
