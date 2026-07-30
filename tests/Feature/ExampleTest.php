@@ -16,4 +16,11 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_the_transparency_page_returns_a_successful_response(): void
+    {
+        $response = $this->get('/transparansi');
+
+        $response->assertStatus(200);
+    }
 }

@@ -99,7 +99,9 @@
                             <h3>Arsip Dokumen APBDes</h3>
                             <ul>
                                 @foreach ($apbdesDocuments as $row)
-                                    @php($docLink = $row->documentLink())
+                                    @php
+                                        $docLink = $row->documentLink();
+                                    @endphp
                                     <li>
                                         <div>
                                             <strong>{{ $row->title }}</strong>

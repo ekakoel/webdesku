@@ -41,7 +41,9 @@
                                     <td class="px-3 py-2">{{ $row->fiscal_year ?: '-' }}</td>
                                     <td class="px-3 py-2">{{ $row->title }}</td>
                                     <td class="px-3 py-2">
-                                        @php($link = $row->documentLink())
+                                        @php
+                                            $link = $row->documentLink();
+                                        @endphp
                                         @if ($link)
                                             <a href="{{ $link }}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">Lihat</a>
                                         @else

@@ -32,7 +32,9 @@
             <div class="service-detail-card__cols">
                 <section>
                     <h2>Persyaratan</h2>
-                    @php($requirements = $service->requirementsList())
+                    @php
+                        $requirements = $service->requirementsList();
+                    @endphp
                     @if (count($requirements))
                         <ol>
                             @foreach ($requirements as $line)
@@ -45,7 +47,9 @@
                 </section>
                 <section>
                     <h2>Prosedur</h2>
-                    @php($process = $service->processList())
+                    @php
+                        $process = $service->processList();
+                    @endphp
                     @if (count($process))
                         <ol>
                             @foreach ($process as $line)

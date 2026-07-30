@@ -1,5 +1,5 @@
 @extends('web.web')
-@title($title ?? 'Home')
+@section('title', $title ?? 'Home').
 
 @section('content')
 <section class="home-slider" data-slider-root>
