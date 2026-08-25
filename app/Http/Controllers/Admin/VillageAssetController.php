@@ -183,7 +183,7 @@ class VillageAssetController extends Controller
             $response = Http::timeout(12)
                 ->retry(1, 200)
                 ->withHeaders([
-                    'User-Agent' => 'Webdesku/1.0 (infografis-asset-resolver)',
+                    'User-Agent' => 'VillageWebsite/1.0 (infografis-asset-resolver)',
                     'Accept-Language' => 'id-ID,id;q=0.9,en;q=0.8',
                 ])
                 ->get('https://nominatim.openstreetmap.org/reverse', [

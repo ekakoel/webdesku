@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @php
-        $siteVillage = app()->bound('currentVillage') ? app('currentVillage') : null;
+        $siteVillage = \App\Support\VillageIdentity::village();
         $siteIcon = $siteVillage?->logo_url ?? asset('icons/icon_desa.png');
+        $siteTitle = \App\Support\VillageIdentity::title($title ?? \App\Support\VillageIdentity::defaultPageTitle(), $siteVillage);
     @endphp
     <link rel="icon" type="image/png" href="{{ $siteIcon }}">
-    <title>{{ $title ?? 'Webdesku' }}</title>
+    <title>{{ $siteTitle }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@700&display=swap" rel="stylesheet">

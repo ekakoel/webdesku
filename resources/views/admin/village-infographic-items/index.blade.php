@@ -11,12 +11,18 @@
                 <div class="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('status') }}</div>
             @endif
             <div class="mb-4 rounded-md border border-gray-200 bg-white p-4">
-                <form method="GET" action="{{ route('admin.village-infographic-items.index') }}" class="grid gap-3 md:grid-cols-[1fr_220px_auto_auto]">
+                <form method="GET" action="{{ route('admin.village-infographic-items.index') }}" class="grid gap-3 md:grid-cols-[1fr_180px_180px_auto_auto]">
                     <input type="text" name="q" value="{{ $q }}" placeholder="Cari judul/deskripsi/nilai..." class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <select name="category" class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="all" @selected($category === 'all')>Semua Kategori</option>
                         @foreach ($categoryOptions as $key => $label)
                             <option value="{{ $key }}" @selected($category === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <select name="year" class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="" @selected(!$year)>Semua Tahun</option>
+                        @foreach ($years as $yearOption)
+                            <option value="{{ $yearOption }}" @selected((int) $year === (int) $yearOption)>{{ $yearOption }}</option>
                         @endforeach
                     </select>
                     <button type="submit" class="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Filter</button>
@@ -26,21 +32,16 @@
             <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
                 <div class="p-6 overflow-x-auto">
                     <table class="min-w-full text-sm">
-                        <thead><tr class="border-b"><th class="px-3 py-2 text-left">Kategori</th><th class="px-3 py-2 text-left">Judul</th><th class="px-3 py-2 text-left">Nilai</th><th class="px-3 py-2 text-left">Icon</th><th class="px-3 py-2 text-left">Status</th><th class="px-3 py-2 text-right">Aksi</th></tr></thead>
+                        <thead><tr class="border-b"><th class="px-3 py-2 text-left">Kategori</th><th class="px-3 py-2 text-left">Tahun</th><th class="px-3 py-2 text-left">Judul</th><th class="px-3 py-2 text-left">Nilai</th><th class="px-3 py-2 text-left">Sumber</th><th class="px-3 py-2 text-left">Status</th><th class="px-3 py-2 text-right">Aksi</th></tr></thead>
                         <tbody>
                             @forelse ($items as $row)
                                 <tr class="border-b">
                                     <td class="px-3 py-3">{{ $row->categoryLabel() }}</td>
+                                    <td class="px-3 py-3">{{ $row->year ?: 'Terkini' }}</td>
                                     <td class="px-3 py-3">{{ $row->title }}</td>
                                     <td class="px-3 py-3">{{ $row->value }} {{ $row->unit }}</td>
                                     <td class="px-3 py-3">
-                                        <span class="inline-flex items-center gap-2 rounded px-2 py-1 text-xs font-semibold text-white" style="background: {{ $row->color ?: '#64748b' }}">
-                                            @if (\Illuminate\Support\Str::startsWith((string) $row->icon, 'fa-'))
-                                                <i class="{{ $row->icon }}"></i>
-                                            @else
-                                                {{ $row->icon ?: '-' }}
-                                            @endif
-                                        </span>
+                                        {{ $row->source ?: '-' }}
                                     </td>
                                     <td class="px-3 py-3">{!! $row->is_published ? '<span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">Publik</span>' : '<span class="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">Draf</span>' !!}</td>
                                     <td class="px-3 py-3 text-right">
@@ -49,7 +50,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="px-3 py-6 text-center text-gray-500">Belum ada data infografis lainnya.</td></tr>
+                                <tr><td colspan="7" class="px-3 py-6 text-center text-gray-500">Belum ada data infografis/statistik lainnya.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

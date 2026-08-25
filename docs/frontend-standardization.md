@@ -4,6 +4,15 @@
 - Berlaku untuk seluruh halaman frontend publik.
 - Tidak berlaku untuk halaman beranda (`resources/views/web/home.blade.php`).
 - Tidak berlaku untuk seluruh halaman backend/admin.
+- Standar ini berlaku untuk single-village deployment Webdesku, bukan untuk tenant-aware UI atau village-switching UI.
+- `Webdesku` adalah nama internal codebase; tampilan publik harus memakai identitas desa dari data/config deployment.
+
+## Identity and Title Standards
+- Layout publik wajib menggunakan identitas desa terpusat, bukan fallback brand `Webdesku`.
+- Homepage memakai title nama desa saja.
+- Halaman selain homepage memakai pola `[Nama Halaman] | [Nama Desa]`.
+- Footer publik memakai nama/identitas Pemerintah Desa dari data `Village`.
+- Jangan hardcode nama desa, alamat, kontak, logo, atau brand publik di Blade.
 
 ## Baseline Style
 - Patokan visual utama adalah header halaman Transparansi.

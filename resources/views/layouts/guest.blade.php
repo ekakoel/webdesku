@@ -5,14 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @php
-            $guestVillage = app()->bound('currentVillage')
-                ? app('currentVillage')
-                : (\Illuminate\Support\Facades\Schema::hasTable('villages') ? \App\Models\Village::query()->first() : null);
+            $guestVillage = \App\Support\VillageIdentity::village();
             $guestIcon = $guestVillage?->logo_url ?? asset('icons/icon_desa.png');
+            $guestTitle = \App\Support\VillageIdentity::title($title ?? \App\Support\VillageIdentity::defaultPageTitle(), $guestVillage);
         @endphp
         <link rel="icon" type="image/png" href="{{ $guestIcon }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ $guestTitle }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

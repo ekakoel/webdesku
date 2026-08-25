@@ -1,11 +1,12 @@
 @php
-    $footVillage = app()->bound('currentVillage') ? app('currentVillage') : null;
+    $footVillage = \App\Support\VillageIdentity::village();
+    $footGovernmentName = \App\Support\VillageIdentity::governmentName($footVillage);
 @endphp
 
 <footer class="site-footer">
     <div class="site-footer__inner">
         <div>
-            <h3>{{ $footVillage?->name ?? 'Desa Dangin Puri' }}</h3>
+            <h3>{{ \App\Support\VillageIdentity::name($footVillage) }}</h3>
             <p>{{ $footVillage?->description ?? 'Portal resmi informasi, layanan publik, dan transparansi desa.' }}</p>
         </div>
         <div>
@@ -20,7 +21,7 @@
         </div>
     </div>
     <div class="site-footer__bottom">
-        <small>&copy; {{ date('Y') }} {{ $footVillage?->name ?? config('app.name', 'Webdesku') }}. Semua hak dilindungi.</small>
+        <small>&copy; {{ date('Y') }} {{ $footGovernmentName }}. Semua hak dilindungi.</small>
     </div>
 </footer>
 

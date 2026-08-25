@@ -40,7 +40,7 @@ class GoogleMapsLinkResolver
                     'track_redirects' => true,
                 ],
                 'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (compatible; Webdesku/1.0)',
+                    'User-Agent' => 'Mozilla/5.0 (compatible; VillageWebsite/1.0)',
                     'Accept-Language' => 'id-ID,id;q=0.9,en;q=0.8',
                 ],
             ]);

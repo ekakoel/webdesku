@@ -10,7 +10,7 @@
     $infographicsModuleEnabled = $moduleManager::isEnabled('infographics');
     $transparencyModuleEnabled = $moduleManager::isEnabled('transparency');
     $regulationsModuleEnabled = $moduleManager::isEnabled('regulations');
-    $navVillage = app()->bound('currentVillage') ? app('currentVillage') : null;
+    $navVillage = \App\Support\VillageIdentity::village();
     $navLogo = $navVillage?->logo_url ?? asset('icons/icon_desa.png');
 @endphp
 
@@ -19,7 +19,7 @@
         <a class="brand" href="{{ route('home') }}">
             <span class="brand__logo"><img src="{{ $navLogo }}" alt="logo desa"></span>
             <span>
-                <strong>{{ $navVillage?->name ?? 'Desa Dangin Puri' }}</strong>
+                <strong>{{ \App\Support\VillageIdentity::name($navVillage) }}</strong>
                 <small>Portal Informasi Desa</small>
             </span>
         </a>
@@ -72,7 +72,7 @@
                         </div>
                     </li>
                 @endif
-                <li><a href="{{ route('statistik') }}">Statistik</a></li>
+                <li><a href="{{ route('statistik') }}">Statistik Desa</a></li>
                 @if ($regulationsModuleEnabled)
                     <li><a href="{{ route('regulations.index') }}">Peraturan Desa</a></li>
                 @endif

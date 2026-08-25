@@ -1,59 +1,148 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Webdesku
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Webdesku adalah aplikasi Laravel 12 untuk **Sistem Informasi Desa / Website Desa**.
 
-## About Laravel
+Nama **Webdesku** hanya dipakai sebagai identitas internal repository/codebase. Identitas yang tampil ke publik harus selalu berasal dari konfigurasi/data desa aktif pada deployment, terutama data `Village`.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Arsitektur operasional saat ini adalah:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```text
+One Webdesku deployment
+        ↓
+One village
+        ↓
+Reusable codebase for other deployments
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Webdesku **bukan** multi-tenant SaaS. Jangan menambahkan tenant switching, subdomain tenancy, runtime village resolver, atau tenant-aware authentication kecuali diminta eksplisit.
 
-## Learning Laravel
+## Tujuan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Webdesku membantu desa mengelola:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- website informasi publik,
+- profil desa,
+- berita,
+- agenda,
+- layanan desa,
+- pengaduan masyarakat,
+- transparansi/APBDes,
+- galeri,
+- pengumuman,
+- peraturan desa,
+- statistik dan infografis,
+- administrasi konten melalui admin panel.
 
-## Laravel Sponsors
+## Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- PHP `^8.2`
+- Laravel `^12.0`
+- Blade
+- Vite
+- Tailwind CSS
+- Alpine.js
+- MySQL/MariaDB atau database lain sesuai konfigurasi Laravel
 
-### Premium Partners
+Package pendukung:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- `barryvdh/laravel-dompdf`
+- `maatwebsite/excel`
+- `simplesoftwareio/simple-qrcode`
+- `spatie/laravel-sitemap`
 
-## Contributing
+## Arsitektur
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Webdesku adalah Laravel monolith dengan pemisahan utama:
 
-## Code of Conduct
+- public website di `resources/views/web`
+- admin panel di `resources/views/admin`
+- routing utama di `routes/web.php`
+- model Eloquent di `app/Models`
+- controller public/admin di `app/Http/Controllers`
+- service pendukung di `app/Services`
+- support/helper class di `app/Support`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+`Village` dapat digunakan sebagai konfigurasi identitas deployment desa, bukan sebagai tenant boundary.
 
-## Security Vulnerabilities
+## Identitas Publik Website
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Jangan menampilkan `Webdesku` sebagai nama website, judul browser, footer, metadata PDF, atau branding publik.
+- Homepage menggunakan nama desa sebagai title utama.
+- Subhalaman menggunakan pola title: `[Nama Halaman] | [Nama Desa]`.
+- Fallback identitas publik adalah `Pemerintah Desa` jika data desa belum tersedia.
+- Logo, nama, kontak, alamat, dan metadata publik harus diambil dari data/config desa, bukan hardcoded di Blade/PHP.
 
-## License
+## Dokumentasi Utama
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Baca dokumen ini sebelum melakukan perubahan:
+
+- `AGENTS.MD`
+- `docs/BLUEPRINT_WEBDESKU.md`
+- `docs/PROJECT_REPORT.md`
+- `docs/data-governance-matrix.md`
+- `docs/frontend-standardization.md`
+
+Jika dokumen lama menyebut multi-desa/SaaS, ikuti aturan terbaru: **single-village reusable deployment**.
+
+## Instalasi Lokal
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm run build
+```
+
+Untuk menjalankan development server:
+
+```bash
+composer run dev
+```
+
+Atau jalankan proses Laravel/Vite secara terpisah sesuai kebutuhan:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+## Storage
+
+Jika fitur upload file/gambar digunakan, pastikan storage link tersedia:
+
+```bash
+php artisan storage:link
+```
+
+## Verifikasi
+
+Gunakan command berikut sesuai kebutuhan perubahan:
+
+```bash
+php artisan test
+vendor/bin/pint --test
+npm run build
+```
+
+Jangan klaim command berhasil jika belum dijalankan.
+
+## Prinsip Pengembangan
+
+- Pahami dokumentasi dan implementasi sebelum coding.
+- Jangan reintroduce multi-tenancy.
+- Jangan hardcode identitas desa.
+- Gunakan konfigurasi/data persisted untuk nilai spesifik desa.
+- Jaga controller tetap thin.
+- Gunakan Form Request untuk validasi non-trivial.
+- Enforce authorization di server-side.
+- Gunakan Laravel Storage untuk file upload.
+- Hindari package baru jika Laravel atau package existing sudah cukup.
+- Update dokumentasi jika mengubah arsitektur, database, routes, roles, modules, configuration, atau business rule.
+
+## Catatan Legacy
+
+Repository masih dapat mengandung legacy multi-tenant remnants seperti `village_id`, `IdentifyVillage`, atau `currentVillage`.
+
+Jangan langsung hapus dan jangan langsung perluas. Inspeksi dependensi dulu, lalu refactor secara kecil dan aman jika memang dibutuhkan.

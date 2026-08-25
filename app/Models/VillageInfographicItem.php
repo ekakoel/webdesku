@@ -11,17 +11,24 @@ class VillageInfographicItem extends Model
         'umum' => 'Umum',
         'layanan' => 'Layanan',
         'kelembagaan' => 'Kelembagaan',
+        'geografi_iklim' => 'Geografi & Iklim',
+        'infrastruktur' => 'Infrastruktur',
         'ekonomi' => 'Ekonomi',
+        'pemerintahan' => 'Pemerintahan',
         'sosial' => 'Sosial',
+        'kesehatan_sosial' => 'Kesehatan & Sosial',
         'lingkungan' => 'Lingkungan',
     ];
 
     protected $fillable = [
         'village_id',
         'category',
+        'year',
         'title',
         'value',
         'unit',
+        'source',
+        'notes',
         'description',
         'icon',
         'color',
@@ -31,6 +38,7 @@ class VillageInfographicItem extends Model
     ];
 
     protected $casts = [
+        'year' => 'integer',
         'is_published' => 'boolean',
         'published_at' => 'datetime',
     ];

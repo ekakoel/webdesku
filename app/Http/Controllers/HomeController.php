@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StatisticsPeriodRequest;
 use App\Models\Agenda;
 use App\Models\Announcement;
 use App\Models\Complaint;
 use App\Models\Gallery;
 use App\Models\News;
+use App\Models\ServiceRequest;
 use App\Models\Slider;
 use App\Models\Village;
-use App\Models\VillageHeadMessage;
-use App\Models\VillageOfficial;
-use App\Models\ServiceRequest;
-use App\Models\VillageAsset;
-use App\Models\VillageApbdesItem;
 use App\Models\VillageApbdesDocument;
+use App\Models\VillageApbdesItem;
+use App\Models\VillageAsset;
+use App\Models\VillageHeadMessage;
 use App\Models\VillageInfographicItem;
 use App\Models\VillageInstagramPost;
+use App\Models\VillageLandUseArea;
+use App\Models\VillageOfficial;
 use App\Models\VillagePopulation;
 use App\Models\VillagePopulationStat;
-use App\Models\VillageLandUseArea;
 use App\Models\VillageProfilePage;
 use App\Models\VillageService;
-use App\Models\VillageTransparencyItem;
 use App\Models\VillageTransparencyDocument;
+use App\Models\VillageTransparencyItem;
+use App\Services\StatisticsService;
 use App\Support\ModuleManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -37,6 +39,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HomeController extends Controller
 {
@@ -189,7 +192,12 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        return view('web.news.show', compact('news', 'relatedNews', 'village'));
+        return view('web.news.show', [
+            'news' => $news,
+            'relatedNews' => $relatedNews,
+            'village' => $village,
+            'title' => $news->title,
+        ]);
     }
 
     public function agenda(): View
@@ -301,7 +309,12 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        return view('web.agenda.show', compact('agenda', 'relatedAgendas', 'village'));
+        return view('web.agenda.show', [
+            'agenda' => $agenda,
+            'relatedAgendas' => $relatedAgendas,
+            'village' => $village,
+            'title' => $agenda->title,
+        ]);
     }
 
     public function services(): View
@@ -326,7 +339,11 @@ class HomeController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        return view('web.services.show', compact('service', 'village'));
+        return view('web.services.show', [
+            'service' => $service,
+            'village' => $village,
+            'title' => $service->name,
+        ]);
     }
 
     public function serviceApply(Request $request, string $slug): RedirectResponse
@@ -514,107 +531,111 @@ class HomeController extends Controller
         ]);
     }
 
-    public function statistik(): View
+    public function statistik(StatisticsPeriodRequest $request, StatisticsService $statisticsService): View
     {
         $village = $this->currentVillage();
-        $moduleStates = $this->frontendModuleStates();
-        $year = (int) request()->query('year', now()->year);
-        $year = $year >= 2000 && $year <= ((int) now()->year + 1) ? $year : (int) now()->year;
-
-        $population = $this->normalizedVillagePopulation($village);
-        $newsTotal = $moduleStates['news'] && Schema::hasTable('news') ? $this->publishedNewsQuery($village)->count() : 0;
-        $agendaTotal = $moduleStates['agendas'] && Schema::hasTable('agendas') ? $this->publishedAgendasQuery($village)->count() : 0;
-        $announcementTotal = $moduleStates['announcements'] && Schema::hasTable('announcements') ? $this->publishedAnnouncementsQuery($village)->count() : 0;
-        $serviceTotal = $moduleStates['services'] && Schema::hasTable('services') ? $this->publishedServicesQuery($village)->count() : 0;
-        $galleryTotal = $moduleStates['galleries'] && Schema::hasTable('galleries') ? $this->publishedGalleriesQuery($village)->count() : 0;
-        $assetTotal = $moduleStates['infographics'] && Schema::hasTable('village_assets') ? $this->publishedAssetsQuery($village)->count() : 0;
-        $complaintTotal = $moduleStates['complaints'] && Schema::hasTable('complaints')
-            ? Complaint::query()->when($village, fn (Builder $query) => $query->where('village_id', $village->id))->count()
-            : 0;
-
-        $kpis = collect([
-            ['label' => 'Total Penduduk', 'value' => number_format((int) $population['total'], 0, ',', '.').' Jiwa'],
-            ...($moduleStates['complaints'] ? [['label' => 'Total Aduan', 'value' => number_format($complaintTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['news'] ? [['label' => 'Total Berita', 'value' => number_format($newsTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['agendas'] ? [['label' => 'Total Agenda', 'value' => number_format($agendaTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['announcements'] ? [['label' => 'Total Pengumuman', 'value' => number_format($announcementTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['services'] ? [['label' => 'Layanan Aktif', 'value' => number_format($serviceTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['infographics'] ? [['label' => 'Total Aset Desa', 'value' => number_format($assetTotal, 0, ',', '.')]] : []),
-            ...($moduleStates['galleries'] ? [['label' => 'Konten Galeri', 'value' => number_format($galleryTotal, 0, ',', '.')]] : []),
-        ])->values()->all();
-
-        $complaintByStatus = collect();
-        $complaintByCategory = collect();
-        if ($moduleStates['complaints'] && Schema::hasTable('complaints')) {
-            $complaintByStatus = Complaint::query()
-                ->selectRaw('status, COUNT(*) as total')
-                ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
-                ->groupBy('status')
-                ->pluck('total', 'status');
-
-            $complaintByCategory = Complaint::query()
-                ->selectRaw('category, COUNT(*) as total')
-                ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
-                ->groupBy('category')
-                ->orderByDesc('total')
-                ->limit(8)
-                ->get();
-        }
-
-        $monthly = collect(range(1, 12))->map(function (int $month) use ($village, $year, $moduleStates) {
-            $news = $moduleStates['news'] && Schema::hasTable('news')
-                ? $this->publishedNewsQuery($village)->whereYear('published_at', $year)->whereMonth('published_at', $month)->count()
-                : 0;
-            $agendas = $moduleStates['agendas'] && Schema::hasTable('agendas')
-                ? $this->publishedAgendasQuery($village)->whereYear('start_at', $year)->whereMonth('start_at', $month)->count()
-                : 0;
-            $complaints = $moduleStates['complaints'] && Schema::hasTable('complaints')
-                ? Complaint::query()
-                    ->when($village, fn (Builder $query) => $query->where('village_id', $village->id))
-                    ->whereYear('submitted_at', $year)
-                    ->whereMonth('submitted_at', $month)
-                    ->count()
-                : 0;
-
-            return [
-                'label' => Carbon::create()->month($month)->translatedFormat('M'),
-                'news' => $news,
-                'agendas' => $agendas,
-                'complaints' => $complaints,
-            ];
-        });
-
-        $assetTypeStats = collect();
-        if ($moduleStates['infographics'] && Schema::hasTable('village_assets')) {
-            $assetCountsByType = $this->publishedAssetsQuery($village)
-                ->selectRaw('type, COUNT(*) as total')
-                ->groupBy('type')
-                ->pluck('total', 'type');
-
-            $assetTypeStats = collect(VillageAsset::typeOptions())
-                ->map(function (array $meta, string $type) use ($assetCountsByType) {
-                    return [
-                        'type' => $type,
-                        'label' => $meta['label'],
-                        'color' => $meta['color'],
-                        'total' => (int) ($assetCountsByType[$type] ?? 0),
-                    ];
-                })
-                ->filter(fn (array $row) => $row['total'] > 0)
-                ->values();
-        }
+        $validated = $request->validated();
+        $report = $statisticsService->report(
+            $village,
+            isset($validated['start_year']) ? (int) $validated['start_year'] : null,
+            isset($validated['end_year']) ? (int) $validated['end_year'] : null,
+        );
 
         return view('web.statistics.index', [
             'village' => $village,
-            'year' => $year,
-            'yearOptions' => range((int) now()->year - 4, (int) now()->year + 1),
-            'kpis' => $kpis,
-            'complaintByStatus' => $complaintByStatus,
-            'complaintByCategory' => $complaintByCategory,
-            'monthly' => $monthly,
-            'population' => $population,
-            'moduleStates' => $moduleStates,
-            'assetTypeStats' => $assetTypeStats,
+            ...$report,
+        ]);
+    }
+
+    public function statistikPdf(StatisticsPeriodRequest $request, StatisticsService $statisticsService)
+    {
+        $village = $this->currentVillage();
+        $validated = $request->validated();
+        $report = $statisticsService->report(
+            $village,
+            isset($validated['start_year']) ? (int) $validated['start_year'] : null,
+            isset($validated['end_year']) ? (int) $validated['end_year'] : null,
+        );
+        $report['villageLogoPath'] = $this->villageLogoPath($village);
+
+        $pdf = Pdf::loadView('pdf.statistics-report', $report)
+            ->setPaper('a4');
+
+        $pdf->getDomPDF()->addInfo('Title', 'Laporan Statistik Pemerintahan Desa '.$report['startYear'].($report['startYear'] === $report['endYear'] ? '' : '-'.$report['endYear']));
+        $pdf->getDomPDF()->addInfo('Author', 'Pemerintah Desa '.($village?->name ?? ''));
+        $pdf->getDomPDF()->addInfo('Subject', 'Laporan Statistik Desa');
+        $pdf->getDomPDF()->addInfo('Creator', 'Sistem Informasi Desa');
+
+        return $pdf->download($statisticsService->filename($report));
+    }
+
+    public function statistikExcel(StatisticsPeriodRequest $request, StatisticsService $statisticsService): StreamedResponse
+    {
+        $village = $this->currentVillage();
+        $validated = $request->validated();
+        $report = $statisticsService->report(
+            $village,
+            isset($validated['start_year']) ? (int) $validated['start_year'] : null,
+            isset($validated['end_year']) ? (int) $validated['end_year'] : null,
+        );
+
+        return response()->streamDownload(function () use ($report): void {
+            echo '<html><head><meta charset="UTF-8"></head><body>';
+            echo '<table border="1">';
+            echo '<tr><th colspan="4">Laporan Statistik Desa</th></tr>';
+            echo '<tr><th>Nama Desa</th><td colspan="3">'.e($report['village']?->name ?? 'Pemerintah Desa').'</td></tr>';
+            echo '<tr><th>Periode</th><td colspan="3">'.e($report['periodLabel']).'</td></tr>';
+            echo '<tr><th>Tanggal Generate</th><td colspan="3">'.e($report['generatedAt']->translatedFormat('d F Y H:i')).'</td></tr>';
+            echo '</table><br>';
+
+            echo '<table border="1">';
+            echo '<tr><th>Indikator</th><th>Nilai</th><th>Cakupan</th><th>Tipe</th></tr>';
+            foreach ($report['kpis'] as $kpi) {
+                echo '<tr><td>'.e($kpi['label']).'</td><td>'.e($kpi['value']).'</td><td>'.e($kpi['scope'] ?? '-').'</td><td>'.e($kpi['type'] ?? '-').'</td></tr>';
+            }
+            echo '</table><br>';
+
+            echo '<table border="1">';
+            echo '<tr><th>Periode</th><th>Berita</th><th>Agenda</th><th>Pengumuman</th><th>Galeri</th><th>Pengaduan</th><th>Pengajuan Layanan</th></tr>';
+            foreach ($report['trend'] as $row) {
+                echo '<tr>';
+                echo '<td>'.e($row['label']).'</td>';
+                echo '<td>'.(int) ($row['news'] ?? 0).'</td>';
+                echo '<td>'.(int) ($row['agendas'] ?? 0).'</td>';
+                echo '<td>'.(int) ($row['announcements'] ?? 0).'</td>';
+                echo '<td>'.(int) ($row['galleries'] ?? 0).'</td>';
+                echo '<td>'.(int) ($row['complaints'] ?? 0).'</td>';
+                echo '<td>'.(int) ($row['service_requests'] ?? 0).'</td>';
+                echo '</tr>';
+            }
+            echo '</table><br>';
+
+            foreach ($report['infographicIndicators'] as $group) {
+                echo '<table border="1">';
+                echo '<tr><th colspan="6">'.e($group['label']).'</th></tr>';
+                echo '<tr><th>Indikator</th><th>Nilai</th><th>Unit</th><th>Tahun</th><th>Sumber</th><th>Catatan</th></tr>';
+                foreach ($group['items'] as $item) {
+                    echo '<tr>';
+                    echo '<td>'.e($item['title']).'</td>';
+                    echo '<td>'.e($item['value'] ?? 'Data belum tersedia').'</td>';
+                    echo '<td>'.e($item['unit'] ?? '-').'</td>';
+                    echo '<td>'.e($item['year'] ?? 'Terkini').'</td>';
+                    echo '<td>'.e($item['source'] ?? '-').'</td>';
+                    echo '<td>'.e($item['notes'] ?? $item['description'] ?? '-').'</td>';
+                    echo '</tr>';
+                }
+                echo '</table><br>';
+            }
+
+            echo '<table border="1">';
+            echo '<tr><th>Data</th><th>Metode Perhitungan</th></tr>';
+            foreach ($report['methodology'] as $label => $description) {
+                echo '<tr><td>'.e($label).'</td><td>'.e($description).'</td></tr>';
+            }
+            echo '</table>';
+            echo '</body></html>';
+        }, $statisticsService->excelFilename($report), [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
     }
 
@@ -897,6 +918,25 @@ class HomeController extends Controller
         return app()->bound('currentVillage')
             ? app('currentVillage')
             : Village::query()->first();
+    }
+
+    private function villageLogoPath(?Village $village): ?string
+    {
+        if (!extension_loaded('gd')) {
+            return null;
+        }
+
+        $logo = trim((string) ($village?->logo ?? ''));
+        if ($logo !== '' && !Str::startsWith($logo, ['http://', 'https://', '//'])) {
+            $path = Storage::disk('public')->path($logo);
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        $fallback = public_path('icons/icon_desa.png');
+
+        return is_file($fallback) ? $fallback : null;
     }
 
     private function profileContext(): array
