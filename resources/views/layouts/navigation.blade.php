@@ -30,7 +30,9 @@
             ...($infographicsModuleEnabled ? [
                 ['route' => 'admin.village-assets.index', 'label' => 'Kelola Aset Desa (Map)'],
                 ['route' => 'admin.village-populations.index', 'label' => 'Kelola Penduduk (Infografis)'],
-                ['route' => 'admin.village-population-stats.index', 'label' => 'Kelola Statistik Penduduk'],
+                
+                ['route' => 'admin.village-hamlets.index', 'label' => 'Kelola Banjar'],
+                
                 ['route' => 'admin.village-infographic-items.index', 'label' => 'Kelola Infografis Lainnya'],
             ] : []),
             ...($transparencyModuleEnabled ? [
@@ -40,6 +42,11 @@
                 ['route' => 'admin.village-transparency-documents.index', 'label' => 'Kelola Dokumen Transparansi'],
             ] : []),
         ],
+        'Statistik & Data' => [
+            ['route' => 'admin.village-population-stats.index', 'label' => 'Kelola Statistik Penduduk'],
+            ['route' => 'admin.village-household-welfares.index', 'label' => 'Kelola Data Desil'],
+            ['route' => 'admin.village-land-use-areas.index', 'label' => 'Luas Wilayah Menurut Penggunaan'],
+        ],
         'Profil & Organisasi Desa' => [
             ['route' => 'admin.village-settings.edit', 'label' => 'Pengaturan Desa'],
             ['route' => 'admin.data-lineage.index', 'label' => 'Data Lineage & Governance'],
@@ -47,7 +54,6 @@
                 ['route' => 'admin.head-messages.index', 'label' => 'Kelola Sambutan Kades'],
                 ['route' => 'admin.officials.index', 'label' => 'Kelola Aparatur Desa'],
                 ['route' => 'admin.profile-pages.index', 'label' => 'Kelola Halaman Profil Desa'],
-                ['route' => 'admin.village-land-use-areas.index', 'label' => 'Luas Wilayah Menurut Penggunaan'],
             ] : []),
             ['route' => 'admin.village-map.edit', 'label' => 'Kelola Map Desa'],
         ],

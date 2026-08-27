@@ -3,8 +3,8 @@
 
 @section('content')
 <section class="home-slider" data-slider-root>
-    <div class="home-slider__track">
-        @if ($sliders->isNotEmpty())
+    @if ($sliders->isNotEmpty())
+        <div class="home-slider__track">
             @foreach ($sliders as $index => $slide)
                 <article class="home-slide {{ $index === 0 ? 'is-active' : '' }}" data-slide-item>
                     <div class="home-slide__bg" style="background-image: linear-gradient(120deg, rgba(6, 23, 49, 0.66), rgba(10, 46, 91, 0.45)), url('{{ \Illuminate\Support\Facades\Storage::url($slide->image_path) }}');"></div>
@@ -23,7 +23,9 @@
                     </div>
                 </article>
             @endforeach
-        @else
+        </div>
+    @else
+        <div class="home-slider__track">
             <article class="home-slide is-active" data-slide-item>
                 <div class="home-slide__bg home-slide__bg--fallback"></div>
                 <div class="home-slide__content">
@@ -40,8 +42,8 @@
                     </div>
                 </div>
             </article>
-        @endif
-    </div>
+        </div>
+    @endif
 
     <div class="home-slider__dots" data-slider-dots>
         @for ($i = 0; $i < max($sliders->count(), 1); $i++)

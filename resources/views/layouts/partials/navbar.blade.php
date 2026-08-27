@@ -72,7 +72,9 @@
                         </div>
                     </li>
                 @endif
-                <li><a href="{{ route('statistik') }}">Statistik Desa</a></li>
+                @include('admin.partials.desil_navigation')
+                
+
                 @if ($regulationsModuleEnabled)
                     <li><a href="{{ route('regulations.index') }}">Peraturan Desa</a></li>
                 @endif

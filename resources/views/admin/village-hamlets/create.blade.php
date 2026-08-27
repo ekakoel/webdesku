@@ -1,0 +1,1 @@
+<x-app-layout><x-slot name="header"><h2 class="text-xl font-semibold">Tambah Banjar</h2></x-slot><div class="py-8"><div class="mx-auto max-w-2xl sm:px-6"><form class="bg-white p-6 shadow sm:rounded" method="POST" action="{{ route('admin.village-hamlets.store') }}">@include('admin.village-hamlets._form',['submitLabel'=>'Simpan'])</form></div></div></x-app-layout>

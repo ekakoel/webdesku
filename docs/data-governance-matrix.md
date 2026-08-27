@@ -91,6 +91,13 @@ Semua komponen di bawah wajib menampilkan data dari tabel database yang disebutk
 - Kategori: umum, layanan, kelembagaan, geografi & iklim, infrastruktur, ekonomi, pemerintahan, sosial, kesehatan & sosial, lingkungan.
 - Catatan: `year` dipakai untuk data historis; data tanpa tahun dianggap data terkini. Data ini hanya untuk agregat non-personal dan tidak boleh memuat data individu.
 
+13. **Analisis Desil Kesejahteraan**
+- Sumber data: `village_household_welfares` dengan referensi wilayah dari `village_hamlets`.
+- Service: `App\Services\DesilAnalysisService`.
+- Halaman/ekspor publik: `desil.index`, `desil.pdf`, dan `desil.excel`.
+- Batas data publik: hanya rekapitulasi KK per desil dan Banjar; kode referensi, nama, NIK, nomor KK, alamat, dan data individu tidak ditampilkan.
+- Kualitas data: Banjar belum terpetakan, desil kosong/tidak valid, dan penanda luar wilayah dihitung sebagai temuan verifikasi tanpa perubahan otomatis.
+
 ## Catatan Implementasi Teknis
 - `HomeController::resolveApbdesDataset()` dipakai bersama oleh Transparansi dan Infografis agar perhitungan tahun aktif dan summary APBDes konsisten.
 - `HomeController::resolveLatestPopulationStatsByCategory()` dipakai bersama oleh Gambaran dan Infografis Penduduk.
