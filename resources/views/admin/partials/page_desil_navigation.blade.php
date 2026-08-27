@@ -2,12 +2,12 @@
     <div class="inline-flex w-full sm:w-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
 
         <a
-            href="{{ route('admin.statistik.index') }}"
+            href="{{ route('statistik') }}"
             class="
                 inline-flex items-center justify-center
                 gap-2 rounded-lg px-4 py-2.5
                 text-sm font-semibold transition
-                {{ request()->routeIs('statistics.index')
+                {{ request()->routeIs('statistik')
                     ? 'bg-blue-700 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }}
@@ -29,12 +29,12 @@
 
 
         <a
-            href="{{ route('admin.desil.index') }}"
+            href="{{ route('admin.village-household-welfares.index') }}"
             class="
                 inline-flex items-center justify-center
                 gap-2 rounded-lg px-4 py-2.5
                 text-sm font-semibold transition
-                {{ request()->routeIs('desil.*')
+                {{ request()->routeIs('admin.village-household-welfares.*', 'admin.village-hamlets.*')
                     ? 'bg-blue-700 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }}

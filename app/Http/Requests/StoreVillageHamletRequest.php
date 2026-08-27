@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Village;
-use Illuminate\Validation\Rule;
+use App\Models\VillageHamlet;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 
@@ -24,8 +24,19 @@ class StoreVillageHamletRequest extends FormRequest
      */
     public function rules(): array
     {
+        $villageId = Village::query()->value('id');
+
         return [
-            'name' => ['required', 'string', 'max:120', Rule::unique('village_hamlets', 'normalized_name')->where('village_id', Village::query()->value('id'))],
+            'name' => [
+                'required',
+                'string',
+                'max:120',
+                function (string $attribute, mixed $value, \Closure $fail) use ($villageId): void {
+                    if ($villageId && VillageHamlet::query()->where('village_id', $villageId)->where('normalized_name', Str::upper((string) $value))->exists()) {
+                        $fail('Nama Banjar sudah digunakan.');
+                    }
+                },
+            ],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

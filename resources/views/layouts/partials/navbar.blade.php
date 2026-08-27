@@ -10,6 +10,7 @@
     $infographicsModuleEnabled = $moduleManager::isEnabled('infographics');
     $transparencyModuleEnabled = $moduleManager::isEnabled('transparency');
     $regulationsModuleEnabled = $moduleManager::isEnabled('regulations');
+    $desilModuleEnabled = $moduleManager::isEnabled('desil');
     $navVillage = \App\Support\VillageIdentity::village();
     $navLogo = $navVillage?->logo_url ?? asset('icons/icon_desa.png');
 @endphp
@@ -31,7 +32,7 @@
                 <li><a href="{{ route('home') }}">Beranda</a></li>
                 @if ($profileModuleEnabled)
                     <li class="menu__item menu__item--dropdown">
-                        <a href="{{ route('profil.gambaran') }}" class="profile-dropdown-trigger">Profil Desa</a>
+                        <a href="#" class="profile-dropdown-trigger">Profil Desa</a>
                         <div class="menu__dropdown">
                             <a href="{{ route('profil.gambaran') }}">Gambaran Umum Desa</a>
                             <a href="{{ route('profil.sejarah') }}">Sejarah Desa</a>
@@ -73,8 +74,6 @@
                     </li>
                 @endif
                 @include('admin.partials.desil_navigation')
-                
-
                 @if ($regulationsModuleEnabled)
                     <li><a href="{{ route('regulations.index') }}">Peraturan Desa</a></li>
                 @endif

@@ -23,6 +23,7 @@ class ModuleManager
             'transparency' => 'Transparansi',
             'infographics' => 'Infografis',
             'profile' => 'Profil Desa',
+            'desil' => 'Analisis Desil',
         ];
     }
 
@@ -34,7 +35,7 @@ class ModuleManager
     public static function enabledMap(): array
     {
         return Cache::remember(self::CACHE_KEY, now()->addMinutes(10), function () {
-            if (!Schema::hasTable('module_settings')) {
+            if (! Schema::hasTable('module_settings')) {
                 return [];
             }
 
@@ -47,7 +48,7 @@ class ModuleManager
 
     public static function setEnabled(string $moduleKey, bool $enabled): void
     {
-        if (!array_key_exists($moduleKey, self::allModules()) || !Schema::hasTable('module_settings')) {
+        if (! array_key_exists($moduleKey, self::allModules()) || ! Schema::hasTable('module_settings')) {
             return;
         }
 

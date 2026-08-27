@@ -14,11 +14,11 @@ use App\Http\Controllers\Admin\SliderController as AdminSliderController;
 use App\Http\Controllers\Admin\VillageApbdesDocumentController as AdminVillageApbdesDocumentController;
 use App\Http\Controllers\Admin\VillageApbdesItemController as AdminVillageApbdesItemController;
 use App\Http\Controllers\Admin\VillageAssetController as AdminVillageAssetController;
+use App\Http\Controllers\Admin\VillageHamletController as AdminVillageHamletController;
 use App\Http\Controllers\Admin\VillageHeadMessageController as AdminVillageHeadMessageController;
+use App\Http\Controllers\Admin\VillageHouseholdWelfareController as AdminVillageHouseholdWelfareController;
 use App\Http\Controllers\Admin\VillageInfographicItemController as AdminVillageInfographicItemController;
 use App\Http\Controllers\Admin\VillageLandUseAreaController as AdminVillageLandUseAreaController;
-use App\Http\Controllers\Admin\VillageHamletController as AdminVillageHamletController;
-use App\Http\Controllers\Admin\VillageHouseholdWelfareController as AdminVillageHouseholdWelfareController;
 use App\Http\Controllers\Admin\VillageMapController;
 use App\Http\Controllers\Admin\VillageOfficialController as AdminVillageOfficialController;
 use App\Http\Controllers\Admin\VillagePopulationController as AdminVillagePopulationController;
@@ -27,8 +27,8 @@ use App\Http\Controllers\Admin\VillageProfilePageController as AdminVillageProfi
 use App\Http\Controllers\Admin\VillageSettingController as AdminVillageSettingController;
 use App\Http\Controllers\Admin\VillageTransparencyDocumentController as AdminVillageTransparencyDocumentController;
 use App\Http\Controllers\Admin\VillageTransparencyItemController as AdminVillageTransparencyItemController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DesilAnalysisController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdmin\ModuleController as SuperAdminModuleController;
 use Illuminate\Support\Facades\Auth;
@@ -68,13 +68,15 @@ Route::middleware('identifyVillage')->group(function () {
         Route::post('/pengaduan', [HomeController::class, 'complaintStore'])->name('complaints.store');
         Route::get('/pengaduan/cek-status', [HomeController::class, 'complaintStatus'])->name('complaints.status');
     });
+    Route::middleware('module:desil')->group(function () {
+        Route::get('/analisis-desil', [DesilAnalysisController::class, 'index'])->name('desil.index');
+        Route::get('/analisis-desil/pdf', [DesilAnalysisController::class, 'pdf'])->name('desil.pdf');
+        Route::get('/analisis-desil/excel', [DesilAnalysisController::class, 'excel'])->name('desil.excel');
+    });
 
     Route::get('/statistik', [HomeController::class, 'statistik'])->name('statistik');
     Route::get('/statistik/pdf', [HomeController::class, 'statistikPdf'])->name('statistik.pdf');
     Route::get('/statistik/excel', [HomeController::class, 'statistikExcel'])->name('statistik.excel');
-    Route::get('/analisis-desil', [DesilAnalysisController::class, 'index'])->name('desil.index');
-    Route::get('/analisis-desil/pdf', [DesilAnalysisController::class, 'pdf'])->name('desil.pdf');
-    Route::get('/analisis-desil/excel', [DesilAnalysisController::class, 'excel'])->name('desil.excel');
     Route::get('/transparansi', [HomeController::class, 'transparansi'])->middleware('module:transparency')->name('transparansi');
     Route::get('/infografis', [HomeController::class, 'infografis'])->middleware('module:infographics')->name('infografis');
     Route::get('/galeri', [HomeController::class, 'galeri'])->middleware('module:galleries')->name('galeri');
@@ -126,8 +128,8 @@ Route::middleware(['auth', 'verified', 'role:aparat,super_admin'])->prefix('admi
     Route::resource('village-land-use-areas', AdminVillageLandUseAreaController::class)->middleware('module:profile')->except(['show']);
 
     Route::resource('village-hamlets', AdminVillageHamletController::class)->except(['show']);
-    
-    Route::resource('village-household-welfares', AdminVillageHouseholdWelfareController::class)->except(['show']);
+
+    Route::resource('village-household-welfares', AdminVillageHouseholdWelfareController::class)->middleware('module:desil')->except(['show']);
     Route::resource('village-transparency-items', AdminVillageTransparencyItemController::class)->middleware('module:transparency')->except(['show']);
     Route::resource('village-transparency-documents', AdminVillageTransparencyDocumentController::class)->middleware('module:transparency')->except(['show']);
     Route::resource('village-apbdes-items', AdminVillageApbdesItemController::class)->middleware('module:transparency')->except(['show']);
@@ -146,8 +148,6 @@ Route::middleware(['auth', 'verified', 'role:aparat,super_admin'])->prefix('admi
     Route::get('village-map', [VillageMapController::class, 'edit'])->name('village-map.edit');
     Route::put('village-map', [VillageMapController::class, 'update'])->name('village-map.update');
     Route::post('village-map/import-big', [VillageMapController::class, 'importBig'])->name('village-map.import-big');
-    // Route::get('/analisis-desil', [AdminVillageHamletController::class, 'index'])->name('desil.index');
-    // Route::get('/statistik-desil', [AdminVillageHamletController::class, 'index'])->name('statistik.index');
 });
 
 Route::middleware(['auth', 'verified', 'role:super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {

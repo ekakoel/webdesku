@@ -151,8 +151,9 @@
             @endif
             <article class="section-card">
                 <h2>Kualitas Data</h2>
-                <p>Banjar kosong: {{ $quality['missing_hamlet'] }} · Desil kosong/tidak valid:
-                    {{ $quality['invalid_decile'] }} · Luar wilayah: {{ $quality['outside_village'] }} · Ditandai perlu
+                <p>Banjar kosong: {{ $quality['missing_hamlet'] }} | Desil kosong/tidak valid:
+                    {{ $quality['invalid_decile'] }} | Jenis kelamin tidak valid:
+                    {{ $quality['invalid_gender'] }} | Luar wilayah: {{ $quality['outside_village'] }} | Ditandai perlu
                     verifikasi: {{ $quality['requires_verification'] }}</p>
             </article>
         </div>

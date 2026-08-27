@@ -146,8 +146,21 @@
                                 </div>
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <button type="button" class="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100" data-quick-status="selesai">Selesai</button>
-                                        <button type="button" class="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800 hover:bg-rose-100" data-quick-status="ditolak">Ditolak</button>
+                                        <button
+                                            type="button"
+                                            class="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                                            data-quick-status="selesai"
+                                            data-submit-status="selesai">
+                                            Selesai
+                                        </button>
+                                        {{-- <button type="button" class="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100" data-quick-status="selesai">Selesai</button> --}}
+                                        <button
+                                            type="button"
+                                            class="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800 hover:bg-rose-100"
+                                            data-quick-status="ditolak">
+                                            Ditolak
+                                        </button>
+                                        {{-- <button type="button" class="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800 hover:bg-rose-100" data-quick-status="ditolak">Ditolak</button> --}}
                                         <button type="submit" class="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Simpan Tindak Lanjut</button>
                                     </div>
                                 </div>
@@ -160,108 +173,181 @@
     </div>
 
     <script>
-        (function () {
-            const modals = Array.from(document.querySelectorAll('[data-complaint-modal]'));
-            const openButtons = Array.from(document.querySelectorAll('[data-complaint-open]'));
+    (function () {
+        const modals = Array.from(
+            document.querySelectorAll('[data-complaint-modal]')
+        );
 
-            const closeModal = (modal) => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.body.classList.remove('is-modal-open');
-            };
+        const openButtons = Array.from(
+            document.querySelectorAll('[data-complaint-open]')
+        );
 
-            const openModal = (modal) => {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.body.classList.add('is-modal-open');
-            };
+        const closeModal = (modal) => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.classList.remove('is-modal-open');
+        };
 
-            openButtons.forEach((button) => {
+        const openModal = (modal) => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.classList.add('is-modal-open');
+        };
+
+        openButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const modalId = button.getAttribute('data-complaint-open');
+                const modal = document.getElementById(modalId);
+
+                if (modal) {
+                    openModal(modal);
+                }
+            });
+        });
+
+        modals.forEach((modal) => {
+            modal.querySelectorAll('[data-complaint-close]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    const modalId = button.getAttribute('data-complaint-open');
-                    const modal = document.getElementById(modalId);
-                    if (modal) openModal(modal);
+                    closeModal(modal);
                 });
             });
 
-            modals.forEach((modal) => {
-                modal.querySelectorAll('[data-complaint-close]').forEach((button) => {
-                    button.addEventListener('click', () => closeModal(modal));
-                });
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal(modal);
+                }
+            });
 
-                modal.addEventListener('click', (event) => {
-                    if (event.target === modal) {
-                        closeModal(modal);
-                    }
-                });
+            const form = modal.querySelector('[data-response-form]');
 
-                const form = modal.querySelector('[data-response-form]');
-                if (!form) return;
+            if (!form) {
+                return;
+            }
 
-                const statusInput = form.querySelector('[data-status-input]');
-                const submitButton = form.querySelector('button[type="submit"]');
-                const noteWrap = form.querySelector('[data-note-wrap]');
-                const noteInput = form.querySelector('[data-note-input]');
-                const noteHint = form.querySelector('[data-note-hint]');
-                const quickButtons = Array.from(form.querySelectorAll('[data-quick-status]'));
+            const statusInput = form.querySelector('[data-status-input]');
+            const noteInput = form.querySelector('[data-note-input]');
+            const noteHint = form.querySelector('[data-note-hint]');
+            const quickButtons = Array.from(
+                form.querySelectorAll('[data-quick-status]')
+            );
 
-                const syncNoteState = () => {
-                    const currentStatus = statusInput ? statusInput.value : 'diproses';
-                    if (!noteWrap || !noteInput || !statusInput) return;
-                    noteInput.required = true;
-                    const placeholders = {
-                        diproses: 'Contoh: Aduan diterima, diverifikasi, dan dijadwalkan tindak lanjut lapangan pada [tanggal/jam].',
-                        selesai: 'Contoh: Tindak lanjut selesai pada [tanggal]. Hasil penanganan: [ringkasan tindakan/solusi].',
-                        ditolak: 'Contoh: Aduan belum dapat diproses karena [alasan jelas], disarankan [langkah/perbaikan dokumen].',
-                    };
-                    noteInput.placeholder = placeholders[currentStatus] || placeholders.diproses;
-                    if (noteHint) {
-                        noteHint.textContent = currentStatus === 'ditolak'
+            const syncNoteState = () => {
+                const currentStatus = statusInput
+                    ? statusInput.value
+                    : 'diproses';
+
+                if (!noteInput || !statusInput) {
+                    return;
+                }
+
+                noteInput.required = true;
+
+                const placeholders = {
+                    diproses:
+                        'Contoh: Aduan diterima, diverifikasi, dan dijadwalkan tindak lanjut lapangan pada [tanggal/jam].',
+
+                    selesai:
+                        'Contoh: Tindak lanjut selesai pada [tanggal]. Hasil penanganan: [ringkasan tindakan/solusi].',
+
+                    ditolak:
+                        'Contoh: Aduan belum dapat diproses karena [alasan jelas], disarankan [langkah/perbaikan dokumen].',
+                };
+
+                noteInput.placeholder =
+                    placeholders[currentStatus] ||
+                    placeholders.diproses;
+
+                if (noteHint) {
+                    noteHint.textContent =
+                        currentStatus === 'ditolak'
                             ? 'Jelaskan alasan penolakan dengan jelas agar warga paham langkah selanjutnya.'
                             : currentStatus === 'selesai'
                                 ? 'Jelaskan hasil akhir tindak lanjut secara ringkas dan konkret.'
                                 : 'Jelaskan progres dan rencana tindak lanjut berikutnya.';
-                    }
-                };
-
-                quickButtons.forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const targetStatus = button.getAttribute('data-quick-status');
-                        if (statusInput && targetStatus) {
-                            statusInput.value = targetStatus;
-                            syncNoteState();
-                            if (noteInput) noteInput.focus();
-                        }
-                    });
-                });
-
-                if (submitButton) {
-                    submitButton.addEventListener('click', () => {
-                        if (statusInput) {
-                            statusInput.value = 'diproses';
-                            syncNoteState();
-                        }
-                    });
                 }
+            };
 
-                syncNoteState();
+            quickButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const targetStatus = button.getAttribute('data-quick-status');
+
+                    if (!statusInput) {
+                        return;
+                    }
+
+                    statusInput.value = targetStatus;
+                    syncNoteState();
+
+                    // Jika tombol memiliki data-submit-status,
+                    // langsung submit form.
+                    if (button.hasAttribute('data-submit-status')) {
+                        if (noteInput && !noteInput.value.trim()) {
+                            noteInput.focus();
+                            return;
+                        }
+
+                        button.disabled = true;
+                        button.textContent = 'Memproses...';
+
+                        form.submit();
+                        return;
+                    }
+
+                    if (noteInput) {
+                        noteInput.focus();
+                    }
+                });
             });
 
-            document.addEventListener('keydown', (event) => {
-                if (event.key !== 'Escape') return;
-                const activeModal = modals.find((modal) => !modal.classList.contains('hidden'));
-                if (activeModal) closeModal(activeModal);
-            });
+            /*
+             * PENTING:
+             * Jangan mengubah status ketika tombol submit diklik.
+             *
+             * Status sudah ditentukan oleh tombol:
+             * - Selesai  -> selesai
+             * - Ditolak  -> ditolak
+             *
+             * Jika tidak memilih quick action, default tetap:
+             * - diproses
+             */
 
-            const openTicket = @json($activeModalTicket ?? '');
-            if (openTicket) {
-                const row = Array.from(document.querySelectorAll('tr')).find((tr) => tr.textContent.includes(openTicket));
-                if (row) {
-                    const btn = row.querySelector('[data-complaint-open]');
-                    if (btn) btn.click();
+            syncNoteState();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            const activeModal = modals.find(
+                (modal) => !modal.classList.contains('hidden')
+            );
+
+            if (activeModal) {
+                closeModal(activeModal);
+            }
+        });
+
+        const openTicket = @json($activeModalTicket ?? '');
+
+        if (openTicket) {
+            const row = Array.from(
+                document.querySelectorAll('tr')
+            ).find((tr) =>
+                tr.textContent.includes(openTicket)
+            );
+
+            if (row) {
+                const btn = row.querySelector(
+                    '[data-complaint-open]'
+                );
+
+                if (btn) {
+                    btn.click();
                 }
             }
-        })();
-    </script>
+        }
+    })();
+</script>
 </x-app-layout>
 

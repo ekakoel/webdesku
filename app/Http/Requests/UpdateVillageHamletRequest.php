@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\VillageHamlet;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class UpdateVillageHamletRequest extends FormRequest
 {
@@ -23,8 +23,19 @@ class UpdateVillageHamletRequest extends FormRequest
      */
     public function rules(): array
     {
+        $hamlet = $this->route('village_hamlet');
+
         return [
-            'name' => ['required', 'string', 'max:120', Rule::unique('village_hamlets', 'normalized_name')->where('village_id', $this->route('village_hamlet')->village_id)->ignore($this->route('village_hamlet'))],
+            'name' => [
+                'required',
+                'string',
+                'max:120',
+                function (string $attribute, mixed $value, \Closure $fail) use ($hamlet): void {
+                    if ($hamlet && VillageHamlet::query()->where('village_id', $hamlet->village_id)->where('normalized_name', Str::upper((string) $value))->whereKeyNot($hamlet->getKey())->exists()) {
+                        $fail('Nama Banjar sudah digunakan.');
+                    }
+                },
+            ],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

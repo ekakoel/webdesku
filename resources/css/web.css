@@ -150,7 +150,7 @@
 
 .menu__dropdown {
     position: absolute;
-    top: calc(100% + 0.35rem);
+    top: calc(100% + 0rem);
     left: 0;
     min-width: 220px;
     background: #fff;
@@ -1795,6 +1795,726 @@
     color: #344a67;
     font-size: 0.79rem;
 }
+/* =========================================================
+   MODERN DROPDOWN ARROW
+   ========================================================= */
+
+.menu__item--dropdown > .profile-dropdown-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Arrow */
+.menu__item--dropdown > .profile-dropdown-trigger::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+
+    transform: rotate(-45deg);
+    transform-origin: center;
+
+    transition:
+        transform 0.25s ease,
+        opacity 0.2s ease;
+
+    margin-top: 1px;
+    opacity: 0.75;
+}
+
+/* =========================================================
+   DROPDOWN OPEN
+   Arrow berubah mengarah ke bawah
+   ========================================================= */
+
+.menu__item--dropdown.is-open > .profile-dropdown-trigger::after {
+    transform: rotate(45deg);
+    margin-top: -3px;
+    opacity: 1;
+}
+
+
+/* =========================================================
+   DROPDOWN MENU
+   ========================================================= */
+
+.menu__item--dropdown {
+    position: relative;
+}
+
+.menu__dropdown {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transform: translateY(-6px);
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+}
+
+/* Open state */
+.menu__item--dropdown.is-open > .menu__dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   DESKTOP HOVER
+   ========================================================= */
+
+@media (min-width: 1025px) {
+    .menu__item--dropdown:hover > .profile-dropdown-trigger::after {
+        opacity: 1;
+    }
+
+    .menu__item--dropdown:hover > .menu__dropdown {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+
+        transform: translateY(0);
+    }
+}
+
+
+/* =========================================================
+   MOBILE / TABLET
+   ========================================================= */
+
+@media (max-width: 1024px) {
+
+    .menu__item--dropdown > .profile-dropdown-trigger {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .menu__item--dropdown > .profile-dropdown-trigger::after {
+        flex-shrink: 0;
+        margin-right: 0.25rem;
+    }
+
+    .menu__item--dropdown.is-open > .profile-dropdown-trigger::after {
+        transform: rotate(45deg);
+        margin-top: -3px;
+    }
+
+    .menu__dropdown {
+        position: static;
+
+        max-height: 0;
+        overflow: hidden;
+
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+
+        transform: none;
+
+        transition:
+            max-height 0.3s ease,
+            opacity 0.2s ease,
+            visibility 0.2s ease;
+    }
+
+    .menu__item--dropdown.is-open > .menu__dropdown {
+        max-height: 500px;
+
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+}
+
+
+
+/* =========================================================
+   ANALISIS DESIL
+   Webdesku - Public Web Design System
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   Page Layout
+   --------------------------------------------------------- */
+
+.container-grid {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.page-section-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* ---------------------------------------------------------
+   Generic Card
+   --------------------------------------------------------- */
+
+.section-card {
+    background: #ffffff;
+    border: 1px solid #e7ebf2;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.045);
+}
+
+.section-card h2 {
+    margin: 0 0 20px;
+    color: #0f172a;
+    font-size: 20px;
+    line-height: 1.35;
+    font-weight: 700;
+}
+
+.section-card p {
+    color: #64748b;
+    line-height: 1.7;
+}
+
+
+/* ---------------------------------------------------------
+   Page Hero
+   --------------------------------------------------------- */
+
+.page-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 32px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(11, 61, 145, 0.06),
+            rgba(30, 136, 229, 0.025)
+        ),
+        #ffffff;
+    border: 1px solid #dfe7f2;
+}
+
+.page-hero small {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: #1e88e5;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+
+.page-hero p {
+    max-width: 720px;
+    margin: 12px 0 0;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.page-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.page-hero__actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: #0b3d91;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #0b3d91;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.page-hero__actions a:hover {
+    background: #092f70;
+    border-color: #092f70;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(11, 61, 145, 0.18);
+}
+
+.page-hero__actions a:nth-child(2) {
+    background: #ffffff;
+    color: #0b3d91;
+}
+
+.page-hero__actions a:nth-child(2):hover {
+    background: #f5f8fc;
+    color: #0b3d91;
+}
+
+
+/* ---------------------------------------------------------
+   Filter
+   --------------------------------------------------------- */
+
+.page-section-stack > form.section-card {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+    gap: 14px;
+    padding: 18px;
+    background: #f8fafc;
+}
+
+.form-control {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid #d8e0ea;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+select.form-control {
+    cursor: pointer;
+    appearance: auto;
+}
+
+.form-control:hover {
+    border-color: #b7c4d5;
+}
+
+.form-control:focus {
+    border-color: #1e88e5;
+    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.12);
+}
+
+.form-control-button {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 1px solid #0b3d91;
+    border-radius: 10px;
+    background: #0b3d91;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-control-button:hover {
+    background: #092f70;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(11, 61, 145, 0.18);
+}
+
+.form-control-button:active {
+    transform: translateY(0);
+}
+
+
+/* ---------------------------------------------------------
+   Statistic Cards
+   --------------------------------------------------------- */
+
+.page-section-stack > .grid.gap-4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.page-section-stack > .grid.gap-4 .section-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+    padding: 20px;
+}
+
+.page-section-stack > .grid.gap-4 .section-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #1e88e5;
+}
+
+.page-section-stack > .grid.gap-4 .section-card:nth-child(2)::before {
+    background: #0b3d91;
+}
+
+.page-section-stack > .grid.gap-4 .section-card:nth-child(3)::before {
+    background: #ffc107;
+}
+
+.page-section-stack > .grid.gap-4 .section-card:nth-child(4)::before {
+    background: #64748b;
+}
+
+.page-section-stack > .grid.gap-4 small {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.page-section-stack > .grid.gap-4 strong {
+    display: block;
+    color: #0f172a;
+    font-size: clamp(24px, 3vw, 30px);
+    line-height: 1.2;
+    font-weight: 800;
+}
+
+
+/* ---------------------------------------------------------
+   Tables
+   --------------------------------------------------------- */
+
+.section-card table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.section-card table thead {
+    background: #f1f5f9;
+}
+
+.section-card table th {
+    padding: 13px 16px;
+    border-bottom: 1px solid #dfe6ee;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.section-card table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #edf1f5;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.section-card table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.section-card table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.section-card table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* ---------------------------------------------------------
+   Decile Table
+   --------------------------------------------------------- */
+
+.section-card table td:first-child {
+    color: #0b3d91;
+    font-weight: 700;
+}
+
+.section-card table td:nth-child(3),
+.section-card table td:nth-child(4) {
+    font-weight: 600;
+}
+
+
+/* ---------------------------------------------------------
+   Priority / Vulnerability Visual Indicators
+   --------------------------------------------------------- */
+
+/* D1-D3 */
+.section-card table tbody tr td:first-child {
+    position: relative;
+}
+
+/* Percentage */
+.section-card table td:last-child {
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ---------------------------------------------------------
+   Gender Distribution
+   --------------------------------------------------------- */
+
+.section-card table th,
+.section-card table td {
+    vertical-align: middle;
+}
+
+
+/* ---------------------------------------------------------
+   Hamlet Analysis
+   --------------------------------------------------------- */
+
+.section-card:has(h2:first-child) {
+    min-width: 0;
+}
+
+.section-card table {
+    overflow-x: auto;
+}
+
+.section-card:nth-of-type(4) table th:nth-child(n+2),
+.section-card:nth-of-type(4) table td:nth-child(n+2) {
+    text-align: center;
+}
+
+
+/* ---------------------------------------------------------
+   Comparison
+   --------------------------------------------------------- */
+
+.section-card table td:last-child {
+    font-weight: 700;
+}
+
+
+/* ---------------------------------------------------------
+   Data Quality
+   --------------------------------------------------------- */
+
+.page-section-stack > .section-card:last-child {
+    padding: 20px 24px;
+    border-color: #f0d98a;
+    background: #fffbeb;
+}
+
+.page-section-stack > .section-card:last-child h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #92400e;
+    font-size: 18px;
+}
+
+.page-section-stack > .section-card:last-child h2::before {
+    content: "!";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffc107;
+    color: #78350f;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.page-section-stack > .section-card:last-child p {
+    margin: 0;
+    color: #78350f;
+    font-size: 14px;
+}
+
+
+/* ---------------------------------------------------------
+   Empty State
+   --------------------------------------------------------- */
+
+.section-card table td[colspan] {
+    padding: 32px 20px;
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
+}
+
+
+/* ---------------------------------------------------------
+   Responsive - Tablet
+   --------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+
+    .section-wrap {
+        padding: 36px 18px 56px;
+    }
+
+    .page-hero {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 26px;
+    }
+
+    .page-hero__actions {
+        justify-content: flex-start;
+    }
+
+    .page-section-stack > form.section-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-section-stack > .grid.gap-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-card {
+        padding: 20px;
+    }
+}
+
+
+/* ---------------------------------------------------------
+   Responsive - Mobile
+   --------------------------------------------------------- */
+
+@media (max-width: 640px) {
+
+    .section-wrap {
+        padding: 24px 12px 48px;
+    }
+
+    .page-section-stack {
+        gap: 16px;
+    }
+
+    .section-card {
+        border-radius: 13px;
+        padding: 16px;
+    }
+
+    .page-hero {
+        padding: 22px 18px;
+        gap: 20px;
+    }
+
+    .page-hero h1 {
+        font-size: 28px;
+    }
+
+    .page-hero p {
+        font-size: 14px;
+    }
+
+    .page-hero__actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .page-hero__actions a {
+        width: 100%;
+        padding: 0 10px;
+        font-size: 13px;
+    }
+
+    .page-section-stack > form.section-card {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+
+    .page-section-stack > .grid.gap-4 {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .page-section-stack > .grid.gap-4 .section-card {
+        min-height: 100px;
+        padding: 16px;
+    }
+
+    .page-section-stack > .grid.gap-4 strong {
+        font-size: 21px;
+    }
+
+    .section-card h2 {
+        font-size: 18px;
+    }
+
+    /*
+     * Table dibuat horizontal-scroll pada mobile
+     * agar kolom tidak dipaksa terlalu sempit.
+     */
+    .section-card {
+        overflow: hidden;
+    }
+
+    .section-card table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .section-card table th,
+    .section-card table td {
+        padding: 11px 13px;
+        font-size: 13px;
+    }
+
+    .page-section-stack > .section-card:last-child p {
+        line-height: 1.8;
+    }
+}
+
+
+/* ---------------------------------------------------------
+   Small Mobile
+   --------------------------------------------------------- */
+
+@media (max-width: 400px) {
+
+    .page-section-stack > .grid.gap-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .page-hero__actions {
+        grid-template-columns: 1fr;
+    }
+
+    .page-hero__actions a {
+        width: 100%;
+    }
+}
+
+
 
 .infographic-governance-card__sources li code {
     font-size: 0.73rem;
@@ -3739,14 +4459,14 @@ body.is-modal-open {
         padding: 0.62rem 0.75rem;
     }
 
-    .menu__dropdown {
+    /* .menu__dropdown {
         position: static;
         min-width: 0;
         width: 100%;
         margin-top: 0.35rem;
         box-shadow: none;
         border-radius: 10px;
-    }
+    } */
 
     .hero .container-grid {
         grid-template-columns: 1fr;

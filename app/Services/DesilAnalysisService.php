@@ -95,7 +95,7 @@ class DesilAnalysisService
 
     private function quality(Builder $query): array
     {
-        return ['missing_hamlet' => (clone $query)->whereNull('village_hamlet_id')->count(), 'invalid_decile' => (clone $query)->where(fn (Builder $q) => $q->whereNull('decile')->orWhereNotIn('decile', VillageHouseholdWelfare::DECILES))->count(), 'outside_village' => (clone $query)->where('is_outside_village', true)->count(), 'requires_verification' => (clone $query)->where('requires_verification', true)->count(), 'non_standard_hamlet' => 0];
+        return ['missing_hamlet' => (clone $query)->whereNull('village_hamlet_id')->count(), 'invalid_decile' => (clone $query)->where(fn (Builder $q) => $q->whereNull('decile')->orWhereNotIn('decile', VillageHouseholdWelfare::DECILES))->count(), 'invalid_gender' => (clone $query)->whereNotNull('head_gender')->whereNotIn('head_gender', array_keys(VillageHouseholdWelfare::GENDERS))->count(), 'outside_village' => (clone $query)->where('is_outside_village', true)->count(), 'requires_verification' => (clone $query)->where('requires_verification', true)->count(), 'non_standard_hamlet' => 0];
     }
 
     private function qualityTotal(Builder $query): int
@@ -104,6 +104,10 @@ class DesilAnalysisService
             $qualityQuery->whereNull('village_hamlet_id')
                 ->orWhereNull('decile')
                 ->orWhereNotIn('decile', VillageHouseholdWelfare::DECILES)
+                ->orWhere(function (Builder $genderQuery) {
+                    $genderQuery->whereNotNull('head_gender')
+                        ->whereNotIn('head_gender', array_keys(VillageHouseholdWelfare::GENDERS));
+                })
                 ->orWhere('is_outside_village', true)
                 ->orWhere('requires_verification', true);
         })->count();

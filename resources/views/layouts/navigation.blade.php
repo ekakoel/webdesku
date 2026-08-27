@@ -10,6 +10,7 @@
     $transparencyModuleEnabled = $moduleManager::isEnabled('transparency');
     $profileModuleEnabled = $moduleManager::isEnabled('profile');
     $complaintsModuleEnabled = $moduleManager::isEnabled('complaints');
+    $desilModuleEnabled = $moduleManager::isEnabled('desil');
     $adminMenuGroups = [
         'Konten Publik' => [
             ...($newsModuleEnabled ? [['route' => 'admin.news.index', 'label' => 'Kelola Berita']] : []),
@@ -31,7 +32,7 @@
                 ['route' => 'admin.village-assets.index', 'label' => 'Kelola Aset Desa (Map)'],
                 ['route' => 'admin.village-populations.index', 'label' => 'Kelola Penduduk (Infografis)'],
                 
-                ['route' => 'admin.village-hamlets.index', 'label' => 'Kelola Banjar'],
+                
                 
                 ['route' => 'admin.village-infographic-items.index', 'label' => 'Kelola Infografis Lainnya'],
             ] : []),
@@ -44,8 +45,11 @@
         ],
         'Statistik & Data' => [
             ['route' => 'admin.village-population-stats.index', 'label' => 'Kelola Statistik Penduduk'],
-            ['route' => 'admin.village-household-welfares.index', 'label' => 'Kelola Data Desil'],
+            ...($desilModuleEnabled ? [
+                ['route' => 'admin.village-household-welfares.index', 'label' => 'Kelola Data Desil'],
+            ] : []),
             ['route' => 'admin.village-land-use-areas.index', 'label' => 'Luas Wilayah Menurut Penggunaan'],
+            ['route' => 'admin.village-hamlets.index', 'label' => 'Kelola Banjar'],
         ],
         'Profil & Organisasi Desa' => [
             ['route' => 'admin.village-settings.edit', 'label' => 'Pengaturan Desa'],

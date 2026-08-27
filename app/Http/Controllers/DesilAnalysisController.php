@@ -20,7 +20,7 @@ class DesilAnalysisController extends Controller
     {
         $report = $this->report($request, $service);
 
-        return Pdf::loadView('pdf.desil-report', $report)->setPaper('a4', 'landscape')->download('laporan-analisis-desil-' . $report['endYear'] . '.pdf');
+        return Pdf::loadView('pdf.desil-report', $report)->setPaper('a4', 'landscape')->download('laporan-analisis-desil-'.$report['endYear'].'.pdf');
     }
 
     public function excel(DesilAnalysisFilterRequest $request, DesilAnalysisService $service): StreamedResponse
@@ -38,7 +38,7 @@ class DesilAnalysisController extends Controller
                 </tr>
                 <tr>
                     <td>Periode</td>
-                    <td colspan="2"><?= $report['startYear'] ?><?= $report['startYear'] !== $report['endYear'] ? ' s.d. ' . $report['endYear'] : '' ?></td>
+                    <td colspan="2"><?= $report['startYear'] ?><?= $report['startYear'] !== $report['endYear'] ? ' s.d. '.$report['endYear'] : '' ?></td>
                 </tr>
                 <tr>
                     <th>Desil</th>
@@ -108,11 +108,11 @@ class DesilAnalysisController extends Controller
                         <td><?= e(str_replace('_', ' ', $label)) ?></td>
                         <td><?= $value ?></td>
                     </tr><?php } ?>
-            </table><?php }, 'analisis-desil-' . $report['endYear'] . '.xls', ['Content-Type' => 'application/vnd.ms-excel; charset=UTF-8']);
-            }
+            </table><?php }, 'analisis-desil-'.$report['endYear'].'.xls', ['Content-Type' => 'application/vnd.ms-excel; charset=UTF-8']);
+    }
 
-            private function report(DesilAnalysisFilterRequest $request, DesilAnalysisService $service): array
-            {
-                return $service->report(app()->bound('currentVillage') ? app('currentVillage') : Village::query()->first(), $request->validated());
-            }
-        }
+    private function report(DesilAnalysisFilterRequest $request, DesilAnalysisService $service): array
+    {
+        return $service->report(app()->bound('currentVillage') ? app('currentVillage') : Village::query()->first(), $request->validated());
+    }
+}
